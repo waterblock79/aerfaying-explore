@@ -4,8 +4,8 @@
 // @version      0.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
-// @match        https://gitblock.cn/*
-// @match        https://aerfaying.com/*
+// @match        http*://gitblock.cn/*
+// @match        http*://aerfaying.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=gitblock.cn
 // @grant        none
 // ==/UserScript==
@@ -114,11 +114,14 @@
         // 给每个评论的用户名加上一个“碰到鼠标”的事件：
         document.querySelectorAll('a.comment_name_2ZnFZ').forEach( data => data.onmouseenter = (e)=>{
             if( e.target.classList.contains('inBox') ) return;
+            // 有时候加载比较满慢会同时出现俩用户框，于是我觉得可以让在创建新用户框的时候先检测一下，清除掉不是属于自己的、多余的用户框
+            document.querySelectorAll('.user_box').forEach( d => { if (data.id != d.id ) { d.remove() } } )
             // 传入数据，在该用户名下生成一个用户简讯框
-            let addUserBox = (data) => {
+            let addUserBox = (data, commentId) => {
                 let dom = document.createElement('div');
                 dom.style = 'z-index: 797979;position: absolute;width: 75%;height: 7.5em;border: 1px #4c97ff solid;border-radius: 3px;background: white;display: flex;align-items: center;';
-                dom.classList.add('user_box')
+                dom.classList.add('user_box');
+                dom.id = commentId;
                 dom.innerHTML = `
                    <img src="https://cdn.gitblock.cn/Media?name=${ data.user.thumbId }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
                    <div>
@@ -129,23 +132,24 @@
                       <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.user.createTime).toLocaleDateString()} 加入</span>
                    </div>
                 `;
-                e.target.parentNode.appendChild(dom)
+                e.target.parentNode.appendChild(dom);
             };
             // 从用户名的链接提取用户 ID
             let userId = e.target.href.match(/[0-9]+/g)[0];
             // 如果这个用户的信息没被存下，那就发送请求获取数据
             if( userInfoCache[userId] == undefined ) {
+                let cId = data.parentElement.parentElement.id; // 请求里面的 data 给代表这个链接元素的外面的 data 覆盖掉了......
                 $.ajax({ url: `/WebApi/Users/${e.target.href.match(/[0-9]+/g)[0]}/Get`, method: 'post', success: (data) => {
-                    addUserBox(data);
+                    addUserBox( data, cId );
                     // 存好这个用户的数据，下回就不再请求了
                     userInfoCache[userId] = data;
                 } });
             } else {
-                addUserBox( userInfoCache[userId] )
+                addUserBox( userInfoCache[userId], data.parentElement.parentElement.id )
             }
         } )
         // 给每个评论的用户名加上“鼠标离开”的事件
-        document.querySelectorAll('a.comment_name_2ZnFZ').forEach( data => data.onmouseleave = data.classList.contains('inBox') ? null : ()=>{ document.querySelectorAll('.user_box').forEach( d => d.remove() ) } )
+        document.querySelectorAll('a.comment_name_2ZnFZ').forEach( data => data.onmouseleave = data.classList.contains('inBox') ? null : ()=>{ document.querySelectorAll('.user_box').forEach( d => d.remove() ) } );
     }, 300);
     // 若未开启用户简讯框功能，那就清除掉这个轮询
     if( localStorage.getItem('explore:user_box') == 0 ) {
