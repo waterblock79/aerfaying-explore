@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.1
+// @version      0.1.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
+// @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
 // @match        http*://gitblock.cn/*
 // @match        http*://aerfaying.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=gitblock.cn
 // @grant        none
+// @license      MIT
 // ==/UserScript==
 
 (function() {
