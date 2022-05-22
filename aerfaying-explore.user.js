@@ -38,11 +38,14 @@
     }
     //
     // === 评论 ID 显示 & 点击显示详细信息事件 ===
+    if( localStorage.getItem('explore:comment_id') == null ){
+        localStorage.setItem('explore:comment_id',1)
+    }
     setInterval(()=>{
         let comments = document.querySelectorAll('.comment_comment_P_hgY');
         for( let i = 0; i < comments.length; i++ ) {
             comments[i].querySelector('.comment_time_3A6Cg').innerHTML +=
-                comments[i].querySelector('.comment_time_3A6Cg').innerHTML.includes('#') ?
+                comments[i].querySelector('.comment_time_3A6Cg').innerHTML.includes('#') || localStorage.getItem('explore:comment_id') == 0 ?
                 `` : ` <span onclick="window.showCommentInfo('${ comments[i].id }')"> #${comments[i].id} </span>`
         }
     },1000)
@@ -162,7 +165,7 @@
     // 植入开启插件设置的函数
     window.openSetting = () => {
         Blockey.Utils.confirm('插件设置',`
-        <b>功能</b><br/>
+        <b>主要功能</b><br/>
            <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
               <input type="checkbox" name="userBox"
                  ${ localStorage.getItem('explore:user_box') == 1 ? 'checked' : '' }
@@ -181,6 +184,19 @@
                 <input type="radio" name="loading" value="2" ${ localStorage.getItem('explore:loading') == 2 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 2 ) "/> 完全隐藏<br />
               </div>
               <img src="https://asset.gitblock.cn/Media?name=4d63b6da4cb6b5d4c2b4517540ce008c.svg" style="margin-left: 1em; margin-top: 0.5em; border-radius: 5px;" width="80%" />
+              <br/><br/>
+           </div>
+           <b>小功能</b><br/>
+           <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
+              <input type="checkbox" name="commentId"
+                 ${ localStorage.getItem('explore:comment_id') == 1 ? 'checked' : '' }
+                 onchange="
+                    localStorage.setItem('explore:comment_id', Number( localStorage.getItem('explore:comment_id') ) == 1 ? 0 : 1 );
+                    Blockey.Utils.Alerter.info('刷新以应用更改');
+                 "
+              >
+                 启用评论 ID 显示
+              </input>
               <hr/>
               <a href="https://github.com/waterblock79/aerfaying-explore" style="display: block;font-weight: bold;text-align: center;">开源于 waterblock79/aerfaying-explore</a>
            </div>
