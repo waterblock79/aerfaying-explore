@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.1.4
+// @version      0.2.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -15,6 +15,19 @@
 
 (function() {
     const encodeHtml = Blockey.Utils.encodeHtml;
+    // === 在 ajax 上挂载事件 ===
+    $.ajaxSettings.xhr = function pf(){
+        try{
+            let xhr = new XMLHttpRequest;
+            xhr.onload = e => {
+                if(JSON.parse(e.target.response).userMap != undefined){
+                    let userMap = JSON.parse(e.target.response).userMap;
+                    Object.keys(userMap).forEach( key => window.userInfoCache[key] = userMap[key] )
+                }
+            }
+            return xhr;
+        }catch(e){}
+    };
     // === 传入评论 ID，显示评论详尽信息 ===
     window.showCommentInfo = (id) => {
         Blockey.Utils.ajax({
@@ -93,7 +106,7 @@
     style.innerHTML = '.comment_info_2Sjc0 { overflow: inherit !important } .'
     document.head.appendChild(style);
     ;
-    let userInfoCache = {};
+    window.userInfoCache = {};
     let userBox = setInterval ( () => {
         // 真人认证等级、用户等级所对应的 class
         let humanVerifiedClass = {
@@ -117,6 +130,13 @@
                 if(30<=level&&level<40){ return classList["level-3"]; }
                 if(50<=level&&level<60){ return classList["level-4"]; }
                 return classList.level-0;
+            },
+            adminBadge = {
+                1: "239,239,237",
+                2: "198,218,47",
+                3: "105,197,233",
+                4: "196,75,239",
+                5: "237,185,54"
             };
         // 给每个评论的用户名加上一个“碰到鼠标”的事件：
         document.querySelectorAll('a.comment_name_2ZnFZ').forEach( data => data.onmouseenter = (e)=>{
@@ -129,30 +149,36 @@
                 dom.style = 'z-index: 797979;position: absolute;width: 75%;height: 7.5em;border: 1px #4c97ff solid;border-radius: 3px;background: white;display: flex;align-items: center;';
                 dom.classList.add('user_box');
                 dom.id = commentId;
+                data.user = data;
                 dom.innerHTML = `
+                   ${ data.user.adminLevel > 0 && localStorage.getItem('explore:show-admin-badge') != 'disabled' ?
+                         `<div style="width: 18px; position: absolute; left: 5em; top: 5em; width: 1em; height: 1em; border-radius: 100%; background: rgb(${adminBadge[data.user.adminLevel]})"></div>` : ``
+                   }
                    <img src="https://cdn.gitblock.cn/Media?name=${ data.user.thumbId }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
                    <div>
-                      <a href="/Users/${data.user.id}" class="comment_name_2ZnFZ inBox" target="_blank" style="display: block;">${ encodeHtml(data.user.username) }</a>
+                      <a href="/Users/${data.user.id}" class="comment_name_2ZnFZ inBox" target="_blank" style="display: block; vertical-align: sub;">
+                         ${ encodeHtml(data.user.username) }
+                      </a>
                       <i class="small human-verified ${ humanVerifiedClass[data.user.humanVerifiedLevel] }" style="font-size: 125%;${ data.user.humanVerifiedLevel == 0 ? 'display: none' : '' }"></i>
                       <small class="user-level_level_3d3fz ${levelClass(data.user.level)}" style="margin-right: 0.5em;">Lv.${data.user.level}</small>
-                      <span style="color: #888;font-size: 12px;">${data.user.goldCoins} 金币 | ${data.user.bitStones} 比特石</span>
-                      <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.user.createTime).toLocaleDateString()} 加入</span>
+                      <span style="color: #888;font-size: 12px;">${data.user.goldCoins} 金币 </span>
+                      <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.user.createTime).toLocaleDateString().replaceAll('/','-')} 加入</span>
                    </div>
                 `;
                 e.target.parentNode.appendChild(dom);
             };
             // 从用户名的链接提取用户 ID
-            let userId = e.target.href.match(/[0-9]+/g)[0];
+            let userId = Number(e.target.href.match(/[0-9]+/g)[0]);
             // 如果这个用户的信息没被存下，那就发送请求获取数据
-            if( userInfoCache[userId] == undefined ) {
+            if( window.userInfoCache[userId] == undefined ) {
                 let cId = data.parentElement.parentElement.id; // 请求里面的 data 给代表这个链接元素的外面的 data 覆盖掉了......
                 $.ajax({ url: `/WebApi/Users/${e.target.href.match(/[0-9]+/g)[0]}/Get`, method: 'post', success: (data) => {
                     addUserBox( data, cId );
                     // 存好这个用户的数据，下回就不再请求了
-                    userInfoCache[userId] = data;
+                    window.userInfoCache[userId] = data;
                 } });
             } else {
-                addUserBox( userInfoCache[userId], data.parentElement.parentElement.id )
+                addUserBox( window.userInfoCache[userId], data.parentElement.parentElement.id )
             }
         } )
         // 给每个评论的用户名加上“鼠标离开”的事件
