@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.2.1
+// @version      0.2.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -317,4 +317,8 @@
             }
         }
     },200);
+    // 去除用户主页内容 maxWidth 限制
+    let noneMaxWidthStyle = document.createElement('style');
+    noneMaxWidthStyle.innerHTML = '.user-home_userInfo_2szc4 { max-height: none !important } ';
+    document.head.appendChild(noneMaxWidthStyle);
 })();
