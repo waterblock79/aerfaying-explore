@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.2.0
+// @version      0.2.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -63,7 +63,6 @@
                 `` : ` <span onclick="window.showCommentInfo('${ comments[i].id }')"> #${comments[i].id} </span>`
         }
     },1000)
-    document.querySelector('.menu-bar_topnav_3HgyJ').style.zIndex = 999999999
     //
     // === 用户信息显示 ===
     if(location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER
@@ -146,7 +145,7 @@
             // 传入数据，在该用户名下生成一个用户简讯框
             let addUserBox = (data, commentId) => {
                 let dom = document.createElement('div');
-                dom.style = 'z-index: 797979;position: absolute;width: 75%;height: 7.5em;border: 1px #4c97ff solid;border-radius: 3px;background: white;display: flex;align-items: center;';
+                dom.style = 'z-index: 5000;position: absolute;width: 75%;height: 7.5em;border: 1px #4c97ff solid;border-radius: 3px;background: white;display: flex;align-items: center;';
                 dom.classList.add('user_box');
                 dom.id = commentId;
                 data.user = data;
