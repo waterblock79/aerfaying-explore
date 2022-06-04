@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.2.3
+// @version      0.2.4
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -15,11 +15,33 @@
 
 (function() {
     const encodeHtml = Blockey.Utils.encodeHtml;
+    // 关闭控制台的警告
+    if( location.pathname == '/IKnow' ) {
+        document.querySelector('title').innerHTML = '关闭控制台警告';
+        document.querySelector('.default-img_box_3iauv').innerHTML = '<img src="https://cdn.gitblock.cn/Media?name=8A20E0147BDA1E61EB3C39FE8A16CF14.svg" width="50%" /><br/><p>已关闭控制台警告</p>';
+        document.querySelector('.default-img_box_3iauv').style.textAlign = 'center';
+        localStorage.setItem('explore:console_warn', 'disabled')
+    }
+    // 在控制台显示警告信息、插件信息
+    console.log(
+        '%cAerfaying-Explore %c\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/',
+        'font-size: 2em; color: dodgerblue;',
+        'font-size: 1em; color: black;'
+    );
+    if( localStorage.getItem('explore:console_warn') != 'disabled' ) {
+        console.log(
+            `%c警告\n%c为保护您的账号安全，如果您不知道您在做什么，请不要在这里输入任何内容！\n%c我理解我在做什么，并关闭提示：${location.origin}/IKnow`,
+            'font-size: 2em; font-weight: bold; color: red; font-family: auto;',
+            'font-size: 1.5em; color: red;',
+            'font-size: 20%; color: orange;'
+        );
+    }
     // === 在 ajax 上挂载事件 ===
     $.ajaxSettings.xhr = function pf(){
         try{
             let xhr = new XMLHttpRequest;
             xhr.onload = e => {
+                // 截取用户信息 userMap
                 if(JSON.parse(e.target.response).userMap != undefined){
                     let userMap = JSON.parse(e.target.response).userMap;
                     Object.keys(userMap).forEach( key => window.userInfoCache[key] = userMap[key] )
@@ -148,23 +170,25 @@
                 dom.style = 'z-index: 5000;position: absolute;width: 75%;height: 7.5em;border: 1px #4c97ff solid;border-radius: 3px;background: white;display: flex;align-items: center;';
                 dom.classList.add('user_box');
                 dom.id = commentId;
-                data.user = data;
+                // 如果传入的用户数据在 data.user 下，那就把这个数据再塞到 data 下
+                data = data.user != undefined ? data.user : data;
                 dom.innerHTML = `
-                   ${ data.user.adminLevel > 0 && localStorage.getItem('explore:show-admin-badge') != 'disabled' ?
-                         `<div style="width: 18px; position: absolute; left: 5em; top: 5em; width: 1em; height: 1em; border-radius: 100%; background: rgb(${adminBadge[data.user.adminLevel]})"></div>` : ``
+                   ${ data.adminLevel > 0 && localStorage.getItem('explore:show-admin-badge') != 'disabled' ?
+                    `<div style="width: 18px; position: absolute; left: 5em; top: 5em; width: 1em; height: 1em; border-radius: 100%; background: rgb(${adminBadge[data.adminLevel]})"></div>` : ``
                    }
-                   <img src="https://cdn.gitblock.cn/Media?name=${ data.user.thumbId }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
+                   <img src="https://cdn.gitblock.cn/Media?name=${ data.thumbId }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
                    <div>
-                      <a href="/Users/${data.user.id}" class="comment_name_2ZnFZ inBox" target="_blank" style="display: block; vertical-align: sub;">
-                         ${ encodeHtml(data.user.username) }
+                      <a href="/Users/${data.id}" class="comment_name_2ZnFZ inBox" target="_blank" style="display: block; vertical-align: sub;">
+                         ${ encodeHtml(data.username) }
                       </a>
-                      <i class="small human-verified ${ humanVerifiedClass[data.user.humanVerifiedLevel] }" style="font-size: 125%;${ data.user.humanVerifiedLevel == 0 ? 'display: none' : '' }"></i>
-                      <small class="user-level_level_3d3fz ${levelClass(data.user.level)}" style="margin-right: 0.5em;">Lv.${data.user.level}</small>
-                      <span style="color: #888;font-size: 12px;">${data.user.goldCoins} 金币 </span>
-                      <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.user.createTime).toLocaleDateString().replaceAll('/','-')} 加入</span>
+                      <i class="small human-verified ${ humanVerifiedClass[data.humanVerifiedLevel] }" style="font-size: 125%;${ data.humanVerifiedLevel == 0 ? 'display: none' : '' }"></i>
+                      <small class="user-level_level_3d3fz ${levelClass(data.level)}" style="margin-right: 0.5em;">Lv.${data.level}</small>
+                      <span style="color: #888;font-size: 12px;">${data.goldCoins} 金币 </span>
+                      <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.createTime).toLocaleDateString().replaceAll('/','-')} 加入</span>
                    </div>
                 `;
                 e.target.parentNode.appendChild(dom);
+                //console.log(data)
             };
             // 从用户名的链接提取用户 ID
             let userId = Number(e.target.href.match(/[0-9]+/g)[0]);
@@ -329,4 +353,17 @@
             }
         })
     },200);
+    // 屏蔽奥的灰烬推荐
+    if( localStorage.getItem('explore:no_ads') == 'on' ) {
+        setInterval(()=>{
+            // 评论区推荐
+            try{
+                document.querySelector('.comment_handleBtn_hP56Y > span.icon.icon-lg').parentNode.parentNode.parentNode.parentNode.remove();
+            } catch(e){}
+            // 作品下方或发现页推荐
+            try {
+                document.querySelector('.project-ads_ad_1uy0F').remove();
+            } catch(e) {}
+        }, 150);
+    }
 })();
