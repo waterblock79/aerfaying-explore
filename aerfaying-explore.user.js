@@ -5,13 +5,17 @@
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
-// @match        http*://gitblock.cn/*
-// @match        http*://aerfaying.com/*
-// @match        http*://3eworld.cn/*
+// @match        http://gitblock.cn/*
+// @match        https://gitblock.cn/*
+// @match        http://aerfaying.com/*
+// @match        https://aerfaying.com/*
+// @match        http://3eworld.cn/*
+// @match        https://3eworld.cn/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=gitblock.cn
 // @grant        none
 // @license      MIT
 // ==/UserScript==
+// 使用 http* 匹配 https、http 的话，在 Userscript（iOS）上貌似会导致无效
 
 (function() {
     const encodeHtml = Blockey.Utils.encodeHtml;
@@ -348,11 +352,13 @@
     // 屏蔽导致 Out of Memory 崩溃的图片
     setInterval(()=>{
         document.querySelectorAll('img').forEach( item => {
-            if(item.src.includes('2732ede113494b63a42c176a86e7fcd9.svg')){
-                item.src = ''
+            if(item.src.toLowerCase().includes('2732ede113494b63a42c176a86e7fcd9.svg')){
+                let parent = item.parentElement;
+                item.src = '';
+                item.remove();
             }
         })
-    },200);
+    },100);
     // 屏蔽奥的灰烬推荐
     if( localStorage.getItem('explore:no_ads') == 'on' ) {
         setInterval(()=>{
