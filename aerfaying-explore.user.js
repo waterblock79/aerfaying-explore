@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.2.5
+// @version      0.2.6
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -143,11 +143,11 @@
         },
             levelClass = (level) => {
                 let classList = {
-                    "level-0": "user-level_level-0_3HviE",
-                    "level-1": "user-level_level-1_uTxh6",
-                    "level-2": "user-level_level-2_3b_PK",
-                    "level-3": "user-level_level-3_1Rr5c",
-                    "level-4": "user-level_level-4_18jcT",
+                    "level-0": "user-flag-level_level-0_3jAPd",
+                    "level-1": "user-flag-level_level-1_zBVua",
+                    "level-2": "user-flag-level_level-2_m_Fd9",
+                    "level-3": "user-flag-level_level-2_m_Fd9",
+                    "level-4": "user-flag-level_level-4_8-BW2",
                 };
                 if(0<level&&level<10){ return classList["level-0"]; }
                 if(10<=level&&level<20){ return classList["level-1"]; }
@@ -186,7 +186,7 @@
                          ${ encodeHtml(data.username) }
                       </a>
                       <i class="small human-verified ${ humanVerifiedClass[data.humanVerifiedLevel] }" style="font-size: 125%;${ data.humanVerifiedLevel == 0 ? 'display: none' : '' }"></i>
-                      <small class="user-level_level_3d3fz ${levelClass(data.level)}" style="margin-right: 0.5em;">Lv.${data.level}</small>
+                      <small class="user-flag-level_level_1N07n ${levelClass(data.level)}" style="margin-right: 0.5em;">Lv.${data.level}</small>
                       <span style="color: #888;font-size: 12px;">${data.goldCoins} 金币 </span>
                       <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.createTime).toLocaleDateString().replaceAll('/','-')} 加入</span>
                    </div>
