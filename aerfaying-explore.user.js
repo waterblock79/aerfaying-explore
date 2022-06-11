@@ -18,7 +18,7 @@
 // 使用 http* 匹配 https、http 的话，在 Userscript（iOS）上貌似会导致无效
 
 (function() {
-    if(localStorage.getItem('explore:jump_to_https')&&location.toString().startsWith("http://"))){
+    if(localStorage.getItem('explore:jump_to_https')&&location.toString().startsWith("http://")){
         location=location.toString().replace("http://","https://",1);
     }
     const encodeHtml = Blockey.Utils.encodeHtml;
