@@ -11,13 +11,16 @@
 // @match        https://aerfaying.com/*
 // @match        http://3eworld.cn/*
 // @match        https://3eworld.cn/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=gitblock.cn
+// @icon         https://gitblock.cn/Content/logo.ico
 // @grant        none
 // @license      MIT
 // ==/UserScript==
 // 使用 http* 匹配 https、http 的话，在 Userscript（iOS）上貌似会导致无效
 
 (function() {
+    if(localStorage.getItem('explore:jump_to_https')&&location.toString().startsWith("http://"))){
+        location=location.toString().replace("http://","https://",1);
+    }
     const encodeHtml = Blockey.Utils.encodeHtml;
     // 关闭控制台的警告
     if( location.pathname == '/IKnow' ) {
@@ -251,6 +254,16 @@
                  "
               >
                  启用评论 ID 显示
+              </input>
+              
+              <input type="checkbox" name="commentId"
+                 ${ localStorage.getItem('explore:jump_to_https') == 1 ? 'checked' : '' }
+                 onchange="
+                    localStorage.setItem('explore:jump_to_https', Number( localStorage.getItem('explore:jump_to_https') ) == 1 ? 0 : 1 );
+                    Blockey.Utils.Alerter.info('刷新以应用更改');
+                 "
+              >
+                 自动跳转 HTTPS
               </input>
               <hr/>
               <a href="https://github.com/waterblock79/aerfaying-explore" style="display: block;font-weight: bold;text-align: center;">开源于 waterblock79/aerfaying-explore</a>
