@@ -18,8 +18,8 @@
 // 使用 http* 匹配 https、http 的话，在 Userscript（iOS）上貌似会导致无效
 
 (function() {
-    if(localStorage.getItem('explore:jump_to_https')&&location.toString().startsWith("http://")){
-        location=location.toString().replace("http://","https://",1);
+    if( localStorage.getItem('explore:jump_to_https') && location.toString().startsWith("http://") ){
+        location = location.toString().replace("http://","https://",1);
     }
     const encodeHtml = Blockey.Utils.encodeHtml;
     // 关闭控制台的警告
@@ -255,7 +255,7 @@
               >
                  启用评论 ID 显示
               </input>
-              
+              <br/>
               <input type="checkbox" name="commentId"
                  ${ localStorage.getItem('explore:jump_to_https') == 1 ? 'checked' : '' }
                  onchange="
