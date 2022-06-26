@@ -34,3 +34,7 @@
    <img src="https://user-images.githubusercontent.com/33573572/169187784-78b28fa7-d4a3-4fa3-8a9f-31e51027d33b.png" style="width: 40%;"/><br/>
    
    <img src="https://user-images.githubusercontent.com/33573572/169187795-a1a444a7-be54-4ff9-8a99-a8236c8fc9e6.png" style="width: 40%;"/>
+   
+4. 在手机端显示用户的金币数量
+
+   <img src="https://user-images.githubusercontent.com/33573572/175809703-b7809a35-128c-4f39-9253-6517bd691304.png" style="width: 40%;"/>
