@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.2.6
+// @version      0.3.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -18,21 +18,21 @@
 // 使用 http* 匹配 https、http 的话，在 Userscript（iOS）上貌似会导致无效
 
 (function() {
-    if( localStorage.getItem('explore:jump_to_https') && location.toString().startsWith("http://") ){
+    if( localStorage.getItem('explore:jump_to_https') == 1 && location.toString().startsWith("http://") ){
         location = location.toString().replace("http://","https://",1);
     }
     const encodeHtml = Blockey.Utils.encodeHtml;
-    // 关闭控制台的警告
+    // === 关闭控制台的警告 ===
     if( location.pathname == '/IKnow' ) {
         document.querySelector('title').innerHTML = '关闭控制台警告';
         document.querySelector('.default-img_box_3iauv').innerHTML = '<img src="https://cdn.gitblock.cn/Media?name=8A20E0147BDA1E61EB3C39FE8A16CF14.svg" width="50%" /><br/><p>已关闭控制台警告</p>';
         document.querySelector('.default-img_box_3iauv').style.textAlign = 'center';
         localStorage.setItem('explore:console_warn', 'disabled')
     }
-    // 在控制台显示警告信息、插件信息
+    // === 在控制台显示警告信息、插件信息 ===
     console.log(
         '%cAerfaying-Explore %c\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/',
-        'font-size: 2em; color: dodgerblue;',
+        'font-size: 1.5em; color: dodgerblue;',
         'font-size: 1em; color: black;'
     );
     if( localStorage.getItem('explore:console_warn') != 'disabled' ) {
@@ -42,6 +42,19 @@
             'font-size: 1.5em; color: red;',
             'font-size: 20%; color: orange;'
         );
+    }
+    // === 在手机上的用户主页也能显示用户 ID、金币、比特石 ===
+    if( localStorage.getItem('explore:show_money_on_mobile') == 1 ) {
+        let style = document.createElement('style');
+        style.innerHTML = `
+        @media (max-width: 768px) {
+           .profile-head_bitStones_1GFkj, .profile-head_goldCoins_TxdJM, .profile-head_userId_22bco {
+              display: inline-flex !important;
+           }
+        }
+        `;
+        document.body.appendChild(style);
+        delete style;
     }
     // === 在 ajax 上挂载事件 ===
     $.ajaxSettings.xhr = function pf(){
@@ -183,7 +196,7 @@
                    ${ data.adminLevel > 0 && localStorage.getItem('explore:show-admin-badge') != 'disabled' ?
                     `<div style="width: 18px; position: absolute; left: 5em; top: 5em; width: 1em; height: 1em; border-radius: 100%; background: rgb(${adminBadge[data.adminLevel]})"></div>` : ``
                    }
-                   <img src="https://cdn.gitblock.cn/Media?name=${ data.thumbId }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
+                   <img src="https://cdn.gitblock.cn/Media?name=${ data.thumbId != null ? data.thumbId : 'E5E524F9459436757759454D28DA79A0.png' }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
                    <div>
                       <a href="/Users/${data.id}" class="comment_name_2ZnFZ inBox" target="_blank" style="display: block; vertical-align: sub;">
                          ${ encodeHtml(data.username) }
@@ -222,6 +235,19 @@
     // === 在菜单中插入插件设置 ===
     // 植入开启插件设置的函数
     window.openSetting = () => {
+        let commonSwitch = (text, name) => {
+            return `
+            <input type="checkbox" name="${name}"
+                 ${ localStorage.getItem(name) == 1 ? 'checked' : '' }
+                 onchange="
+                    localStorage.setItem('${name}', Number( localStorage.getItem('${name}') ) == 1 ? 0 : 1 );
+                    Blockey.Utils.Alerter.info('刷新以应用更改');
+                 "
+              >
+                 ${text}
+              </input>
+            `;
+        }
         Blockey.Utils.confirm('插件设置',`
         <b>主要功能</b><br/>
            <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
@@ -246,25 +272,13 @@
            </div>
            <b>小功能</b><br/>
            <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
-              <input type="checkbox" name="commentId"
-                 ${ localStorage.getItem('explore:comment_id') == 1 ? 'checked' : '' }
-                 onchange="
-                    localStorage.setItem('explore:comment_id', Number( localStorage.getItem('explore:comment_id') ) == 1 ? 0 : 1 );
-                    Blockey.Utils.Alerter.info('刷新以应用更改');
-                 "
-              >
-                 启用评论 ID 显示
-              </input>
+              ${commonSwitch('启用评论 ID 显示', 'explore:comment_id')}
               <br/>
-              <input type="checkbox" name="commentId"
-                 ${ localStorage.getItem('explore:jump_to_https') == 1 ? 'checked' : '' }
-                 onchange="
-                    localStorage.setItem('explore:jump_to_https', Number( localStorage.getItem('explore:jump_to_https') ) == 1 ? 0 : 1 );
-                    Blockey.Utils.Alerter.info('刷新以应用更改');
-                 "
-              >
-                 自动跳转 HTTPS
-              </input>
+              ${commonSwitch('在手机端也显示用户的金币数量', 'explore:show_money_on_mobile')}
+              <br/>
+              ${commonSwitch('自动跳转 HTTPS', 'explore:jump_to_https')}
+              <br/>
+              ${commonSwitch('去除个人简介的长度限制', 'explore:no_height_limit')}
               <hr/>
               <a href="https://github.com/waterblock79/aerfaying-explore" style="display: block;font-weight: bold;text-align: center;">开源于 waterblock79/aerfaying-explore</a>
            </div>
@@ -358,10 +372,15 @@
             }
         }
     },200);
-    // 去除用户主页内容 maxWidth 限制
-    let noneMaxWidthStyle = document.createElement('style');
-    noneMaxWidthStyle.innerHTML = '.user-home_userInfo_2szc4 { max-height: none !important } ';
-    document.head.appendChild(noneMaxWidthStyle);
+    //
+    // 去除主页 maxHeight 的机制
+    if( localStorage.getItem('explore:no_height_limit') == null ) { localStorage.setItem('explore:no_height_limit', 1) }
+    if( localStorage.getItem('explore:no_height_limit') == 1 ) {
+       let noneMaxWidthStyle = document.createElement('style');
+       noneMaxWidthStyle.innerHTML = '.user-home_userInfo_2szc4 { max-height: none !important }';
+       document.head.appendChild(noneMaxWidthStyle);
+    }
+    //
     // 屏蔽导致 Out of Memory 崩溃的图片
     setInterval(()=>{
         document.querySelectorAll('img').forEach( item => {
@@ -385,4 +404,16 @@
             } catch(e) {}
         }, 150);
     }
+    // 使得弹出框（如评论详细信息、原创声明）的内容可以被复制
+    let allowCopyStyle = document.createElement('style');
+    allowCopyStyle.innerHTML = `
+       .modal_modal-content_3brCX {
+          -webkit-user-select: auto !important;
+          -moz-user-select: auto !important;
+          -ms-user-select: auto !important;
+          user-select: auto !important;
+       }
+       .item-attached-thin-modal-body_wrapper_3KdPz { user-select: none; }
+      `
+    document.head.appendChild(allowCopyStyle);
 })();
