@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.3.0
+// @version      0.3.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -376,9 +376,9 @@
     // 去除主页 maxHeight 的机制
     if( localStorage.getItem('explore:no_height_limit') == null ) { localStorage.setItem('explore:no_height_limit', 1) }
     if( localStorage.getItem('explore:no_height_limit') == 1 ) {
-       let noneMaxWidthStyle = document.createElement('style');
-       noneMaxWidthStyle.innerHTML = '.user-home_userInfo_2szc4 { max-height: none !important }';
-       document.head.appendChild(noneMaxWidthStyle);
+        let noneMaxWidthStyle = document.createElement('style');
+        noneMaxWidthStyle.innerHTML = '.user-home_userInfo_2szc4 { max-height: none !important }';
+        document.head.appendChild(noneMaxWidthStyle);
     }
     //
     // 屏蔽导致 Out of Memory 崩溃的图片
@@ -416,4 +416,10 @@
        .item-attached-thin-modal-body_wrapper_3KdPz { user-select: none; }
       `
     document.head.appendChild(allowCopyStyle);
+    // 拯救无法访问的 https://asset.mozhua.org:444/Media?name=*.* 链接
+    setInterval(()=>{
+        document.querySelectorAll('img[src*="https://asset.mozhua.org:444/Media?name="]').forEach( item => {
+            item.src = item.src.replace('https://asset.mozhua.org:444/Media?name=','https://cdn.gitblock.cn/Media?name=');
+        })
+    }, 250);
 })();
