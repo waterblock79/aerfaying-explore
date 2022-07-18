@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
 // @namespace    https://waterblock79.github.io/
-// @version      0.3.1
+// @version      0.3.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
@@ -237,35 +237,37 @@
     window.openSetting = () => {
         let commonSwitch = (text, name) => {
             return `
+            <label>
             <input type="checkbox" name="${name}"
                  ${ localStorage.getItem(name) == 1 ? 'checked' : '' }
                  onchange="
                     localStorage.setItem('${name}', Number( localStorage.getItem('${name}') ) == 1 ? 0 : 1 );
                     Blockey.Utils.Alerter.info('刷新以应用更改');
                  "
-              >
+              />
                  ${text}
-              </input>
+              </label>
             `;
         }
         Blockey.Utils.confirm('插件设置',`
         <b>主要功能</b><br/>
            <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
+              <label>
               <input type="checkbox" name="userBox"
                  ${ localStorage.getItem('explore:user_box') == 1 ? 'checked' : '' }
                  onchange="
                     localStorage.setItem('explore:user_box', Number( localStorage.getItem('explore:user_box') ) == 1 ? 0 : 1 );
                     Blockey.Utils.Alerter.info('刷新以应用更改');
                  "
-              >
+              />
                  启用用户简讯框
-              </input>
+              </label>
               <img src="https://asset.gitblock.cn/Media?name=d1a2079f6e5b365adef607fc1b2630bf.svg" style="margin-left: 1em" width="80%" /><br/><br/>
               全屏蓝色加载遮盖设置
               <div style="margin-left: 0.8em;">
-                <input type="radio" name="loading" value="0" ${ localStorage.getItem('explore:loading') == 0 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 0 ) "/> 不改变 <br />
-                <input type="radio" name="loading" value="1" ${ localStorage.getItem('explore:loading') == 1 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 1 ) "/> 以在左下角显示不影响浏览的加载中提示替代之<br />
-                <input type="radio" name="loading" value="2" ${ localStorage.getItem('explore:loading') == 2 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 2 ) "/> 完全隐藏<br />
+                <label><input type="radio" name="loading" value="0" ${ localStorage.getItem('explore:loading') == 0 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 0 ) "/> 不改变</label><br />
+                <label><input type="radio" name="loading" value="1" ${ localStorage.getItem('explore:loading') == 1 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 1 ) "/> 以在左下角显示不影响浏览的加载中提示替代之</label><br />
+                <label><input type="radio" name="loading" value="2" ${ localStorage.getItem('explore:loading') == 2 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 2 ) "/> 完全隐藏</label><br />
               </div>
               <img src="https://asset.gitblock.cn/Media?name=4d63b6da4cb6b5d4c2b4517540ce008c.svg" style="margin-left: 1em; margin-top: 0.5em; border-radius: 5px;" width="80%" />
               <br/><br/>
@@ -421,5 +423,5 @@
         document.querySelectorAll('img[src*="https://asset.mozhua.org:444/Media?name="]').forEach( item => {
             item.src = item.src.replace('https://asset.mozhua.org:444/Media?name=','https://cdn.gitblock.cn/Media?name=');
         })
-    }, 250);
+    }, 256);
 })();
