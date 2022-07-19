@@ -16,8 +16,8 @@
 
 ## 功能
 
-<img src="https://user-images.githubusercontent.com/33573572/169181677-f47bf907-91cb-4513-89f9-3b11b4315787.png" style="height: 20em;" align="right"/>
-<img src="https://user-images.githubusercontent.com/33573572/179704326-3e17428e-79f6-4ae9-aa6f-0cd916a1bfbb.png" style="height: 20em;" align="right"/>
+<img src="https://user-images.githubusercontent.com/33573572/169181677-f47bf907-91cb-4513-89f9-3b11b4315787.png" style="height: 15em;" align="right"/>
+<img src="https://user-images.githubusercontent.com/33573572/179704326-3e17428e-79f6-4ae9-aa6f-0cd916a1bfbb.png" style="height: 15em;" align="right"/>
 
 **插件设置（如图左）在菜单条下，如图（右）。**
 
