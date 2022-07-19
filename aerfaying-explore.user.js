@@ -1,10 +1,9 @@
 // ==UserScript==
 // @name         高效探索 - 阿儿法营/稽木世界社区优化插件
-// @namespace    https://waterblock79.github.io/
-// @version      0.3.1
+// @namespace    waterblock79.github.io
+// @version      1.0.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
-// @updateURL    https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js
 // @match        http://gitblock.cn/*
 // @match        https://gitblock.cn/*
 // @match        http://aerfaying.com/*
@@ -15,411 +14,591 @@
 // @grant        none
 // @license      MIT
 // ==/UserScript==
-// 使用 http* 匹配 https、http 的话，在 Userscript（iOS）上貌似会导致无效
+/*
+   aerfaying-explore 是一个非官方的、针对阿儿法营/稽木世界社区的开源优化插件
+   https://github.com/waterblock79/aerfaying-explore
+*/
 
 (function() {
-    if( localStorage.getItem('explore:jump_to_https') == 1 && location.toString().startsWith("http://") ){
-        location = location.toString().replace("http://","https://",1);
+    'use strict';
+    //  $(selector)
+    //  即 document.querySelectorAll(selector)
+    const $ = (selector) => document.querySelectorAll(selector);
+
+
+    //  addSelectorEvent(selector, event, callback)
+    //  为全部符合 selector 选择器的元素自动添加 event 事件，若该事件被触发就会执行 callback 回调
+    let eventElement = [];
+    const addSelectorEvent = (selector, event, callback) => {
+        eventElement.push({
+            selector: selector,
+            event: event,
+            callback: callback,
+            handledElements: []
+        })
     }
-    const encodeHtml = Blockey.Utils.encodeHtml;
-    // === 关闭控制台的警告 ===
-    if( location.pathname == '/IKnow' ) {
-        document.querySelector('title').innerHTML = '关闭控制台警告';
-        document.querySelector('.default-img_box_3iauv').innerHTML = '<img src="https://cdn.gitblock.cn/Media?name=8A20E0147BDA1E61EB3C39FE8A16CF14.svg" width="50%" /><br/><p>已关闭控制台警告</p>';
-        document.querySelector('.default-img_box_3iauv').style.textAlign = 'center';
-        localStorage.setItem('explore:console_warn', 'disabled')
+    window.addSelectorEvent = addSelectorEvent;
+
+
+    //  addFindElement(selector, callback)
+    //  当选择器发现新的符合 selector 的元素就执行 callback，callback 会传入该元素。
+    let findElement = [];
+    const addFindElement = (selector, callback) => {
+        findElement.push({
+            selector: selector,
+            callback: callback,
+            handledElements: []
+        })
+    };
+    window.addFindElement = addFindElement;
+
+
+    //  →_→
+    //  通过 setInterval 实现 addFindElement 和 addSelectorEvent。
+    setInterval(() => {
+        // addFindElement
+        findElement.forEach((item) => {
+            $(item.selector).forEach((element) => {
+                if (!item.handledElements.find(e => e == element)) {
+                    item.callback(element);
+                    item.handledElements.push(element);
+                }
+            })
+        })
+        // addSelectorEvent
+        eventElement.forEach((item) => {
+            $(item.selector).forEach((element) => {
+                if (!item.handledElements.find(e => e == element)) {
+                    element.addEventListener(item.event, item.callback);
+                    item.handledElements.push(element);
+                }
+            })
+        });
+    }, 32);
+
+
+    //  addStyle(css)
+    //  将 CSS 塞到 <style> 标签里然后添加到页面中
+    const addStyle = (css) => {
+        const style = document.createElement('style');
+        style.innerHTML = css;
+        document.head.appendChild(style);
+    };
+
+
+    //  insertBefore(newElement, targetElement)
+    //  把 newElement 插入到 targetElement 前面
+    const insertBefore = (newElement, targetElement) => {
+        targetElement.parentNode.insertBefore(newElement, targetElement);
+    };
+
+    // encodeHTML(str)
+    // 转义字符串中的 HTML 字符
+    const encodeHTML = (str) => {
+        let textNode = document.createTextNode(str);
+        let div = document.createElement('div');
+        div.append(textNode);
+        return div.innerHTML;
+    };
+
+
+    // 监听请求（这里用的是 jQuery 的 $）
+    window.$(document).ajaxSuccess(function (event, xhr, settings, response) {
+        if (settings.url.search(/WebApi\/Projects\/[0-9]+\/Get/) == 1) { // /WebApi/Projects/*/Get 获取作品信息
+            projectThumbId = response.project.thumbId; // 在变量里保存获取到的作品封面
+        }
+        if (settings.url == '/WebApi/Comment/GetPage') { // /WebApi/Comment/GetPage 评论
+            response.replies.forEach((comment) => {
+                commentData[comment.id] = comment;
+            });
+            response.pagedThreads.items.forEach((comment) => {
+                commentData[comment.id] = comment;
+            });
+        }
+    });
+
+    //  自动 HTTPS
+    if (localStorage['explore:https'] == 'true') {
+        if (location.toString().startsWith("http://")) {
+            location = location.toString().replace("http://", "https://", 1);
+        }
     }
-    // === 在控制台显示警告信息、插件信息 ===
+
+    //  替换原不可用的 asset.mozhua.org:444 的资源地址
+    addFindElement('img[src*="asset.mozhua.org:444"]', (element) => {
+        element.src = element.src.replace('https://asset.mozhua.org:444/Media?name=', 'https://cdn.gitblock.cn/Media?name=');
+    });
+
+
+    //  添加控制台的提示
     console.log(
         '%cAerfaying-Explore %c\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/',
         'font-size: 1.5em; color: dodgerblue;',
         'font-size: 1em; color: black;'
     );
-    if( localStorage.getItem('explore:console_warn') != 'disabled' ) {
-        console.log(
-            `%c警告\n%c为保护您的账号安全，如果您不知道您在做什么，请不要在这里输入任何内容！\n%c我理解我在做什么，并关闭提示：${location.origin}/IKnow`,
-            'font-size: 2em; font-weight: bold; color: red; font-family: auto;',
-            'font-size: 1.5em; color: red;',
-            'font-size: 20%; color: orange;'
-        );
-    }
-    // === 在手机上的用户主页也能显示用户 ID、金币、比特石 ===
-    if( localStorage.getItem('explore:show_money_on_mobile') == 1 ) {
-        let style = document.createElement('style');
-        style.innerHTML = `
-        @media (max-width: 768px) {
-           .profile-head_bitStones_1GFkj, .profile-head_goldCoins_TxdJM, .profile-head_userId_22bco {
-              display: inline-flex !important;
-           }
+
+
+    //  插件设置
+    let settingsPage = [
+        {
+            title: true,
+            text: '主要功能'
+        }, {
+            tag: 'explore:loading',
+            text: '全屏蓝色加载遮盖设置',
+            select: [
+                '保持原状',
+                '在导航栏显示“加载中”的文字和动画（最小）',
+                '以在左下角显示不影响浏览的加载中提示替代之（经典）'
+            ],
+            type: 'radio',
+            default: 1,
+            img: '//asset.gitblock.cn/Media?name=a744eb6ea5b2336abbfd73b05ec09c32.svg'
+        }, {
+            title: true,
+            text: '小功能'
+        }, {
+            tag: 'explore:https',
+            text: '自动 HTTPS',
+            type: 'check',
+            default: true,
+        }, {
+            tag: 'explore:hoverId',
+            text: '仅当鼠标悬停在评论上时显示评论 ID',
+            type: 'check',
+            default: false,
+        }, {
+            tag: 'explore:noMaxHeight',
+            text: '禁用个人简介的最大高度限制',
+            type: 'check',
+            default: true,
         }
-        `;
-        document.body.appendChild(style);
-        delete style;
-    }
-    // === 在 ajax 上挂载事件 ===
-    $.ajaxSettings.xhr = function pf(){
-        try{
-            let xhr = new XMLHttpRequest;
-            xhr.onload = e => {
-                // 截取用户信息 userMap
-                if(JSON.parse(e.target.response).userMap != undefined){
-                    let userMap = JSON.parse(e.target.response).userMap;
-                    Object.keys(userMap).forEach( key => window.userInfoCache[key] = userMap[key] )
-                }
+    ];
+    // 设置默认值
+    settingsPage.forEach((item) => {
+        if (!localStorage[item.tag] && !item.title) {
+            localStorage[item.tag] = item.default;
+        }
+    })
+    // 创建设置摁钮
+    let settingsButton = document.createElement('li');
+    settingsButton.innerHTML = '<a id="nav-explore-setting"><span>插件设置</span></a>';
+    addStyle(`
+        .explore-settings-label {
+            font-size: unset;
+            margin-bottom: auto;
+            line-height: unset;
+            display: inline;
+            font-weight: unset;
+        }
+    `)
+    settingsButton.addEventListener('click', () => {
+        let html = '';
+        // 每项的设置
+        settingsPage.forEach((item) => {
+            // 如果是一个标题
+            if (item.title) {
+                html += `
+                    <div style="margin: .3em 0;">
+                        <b>${item.text}</b>
+                    </div>
+                `;
+                return;
             }
-            return xhr;
-        }catch(e){}
-    };
-    // === 传入评论 ID，显示评论详尽信息 ===
-    window.showCommentInfo = (id) => {
-        Blockey.Utils.ajax({
-            url:'/WebApi/Comment/GetPage',
+            html += `
+                <div style="margin: 0 .5em;">
+            `;
+            // Check 类型设置项的勾选控件
+            if (item.type == 'check') {
+                html += `
+                    <input
+                        type="checkbox"
+                        name="${item.tag}"
+                        id="${item.tag}"
+                        ${localStorage[item.tag] == 'true' ? 'checked' : ''}
+                        onchange="localStorage['${item.tag}'] = this.checked"
+                        style="margin-right: .05em;"
+                    />
+                `;
+            }
+            // 设置名称，如果是 check 类型的设置项，就用 span 包裹，否则就用 b 包裹
+            html += `
+                <span>
+                    ${item.text}
+                </span>
+            `;
+            // Radio 类型设置项的设置选项
+            if (item.type == 'radio') {
+                // 设置选项
+                html += `<div style="margin-left: 0.8em;">`;
+                item.select.forEach((selectItem, index) => {
+                    html += `
+                        <input
+                            type="radio"
+                            name="${item.tag}"
+                            value="${index}"
+                            id="${index}"
+                            ${index == localStorage[item.tag] ? 'checked' : ''}
+                            onchange="localStorage['${item.tag}'] = ${index}"
+                        />
+                        <label
+                            class="explore-settings-label"
+                            for="${index}"
+                        >
+                            ${selectItem}
+                        </label>
+                        <br/>
+                    `;
+                });
+                html += `</div>`;
+            }
+            // 设置图片
+            if (item.img) {
+                html += `<img style="margin-left: 1em; margin-top: 0.5em; border-radius: 5px;" width="90%" src="${item.img}"/>`;
+            }
+            html += '</div>';
+        });
+        // 设置的尾部显示开源地址
+        html += `<hr/>`;
+        html += `<a href="https://github.com/waterblock79/aerfaying-explore" style="display:block;font-weight:bold;text-align:center;"> 开源于 waterblock79/aerfaying-explore </a>`;
+        html += `<br/>`;
+        // 显示提示框
+        Blockey.Utils.confirm('插件设置', html);
+        // 移除掉“确定”按钮左边的“取消”按钮，并把“确定”摁钮中的文字替换为“关闭”
+        $('button.ok-button')[0].parentNode.childNodes[0].remove();
+        $('button.ok-button')[0].innerHTML = '关闭';
+        $('button.ok-button')[0].addEventListener('click', () => { location.reload(); });
+    })
+    if (location.pathname.match(/\S+\/Editor/) == null) // 当前页面不是作品编辑器页面时
+        insertBefore(settingsButton, $('#nav-settings')[0]);
+
+
+    // 使弹出框（如评论详细信息、原创声明）中的内容可以被复制
+    addStyle(`
+    .modal_modal-content_3brCX {
+        -webkit-user-select: auto !important;
+        -moz-user-select: auto !important;
+        -ms-user-select: auto !important;
+        user-select: auto !important;
+    }
+    .item-attached-thin-modal-body_wrapper_3KdPz { user-select: none; }
+    `);
+
+
+    // 不文明用语“警告！！！”的不再提示
+    addFindElement('div.modal_header-item_1WbOm.modal_header-item-title_1N2BE', (element) => {
+        // 如果这个弹出框的标题是“警告！！！”
+        if (element.innerHTML == '警告！！！') {
+            // 如果已经标记不再提示了那就直接帮忙点一下确定键就好了
+            if (sessionStorage.blockedAlert) {
+                $('.footer>.ok-button')[0].click();
+                return;
+            }
+            // 给真的确定摁钮加一个标记
+            $('.footer>.ok-button')[0].classList.add("real");
+            // 创建“不再提示”按钮
+            let blockAlert = document.createElement('button');
+            blockAlert.classList.add("ok-button");
+            blockAlert.style.background = "coral";
+            blockAlert.innerHTML = '不再提示';
+            blockAlert.addEventListener('click', () => {
+                $('.footer>.ok-button.real')[0].click(); // 点击真·确定按钮
+                sessionStorage.blockedAlert = true;
+            })
+            // 插入摁钮
+            insertBefore(blockAlert, $('.footer>.ok-button')[0]);
+            $('.footer')[0].style.marginTop = '0.5em';
+        }
+    });
+
+
+    // 替换掉原先全屏的加载遮盖
+    let projectThumbId = 'E0D08BE45041CB909364CE99790E7249.png'; // 在加载作品时候需要用到的作品封面 assets ID
+    addFindElement('.menu-bar_right-bar_3dIRQ', (element) => {
+        // 如果其设置为“保持原状”，那就直接退出
+        if (localStorage['explore:loading'] == 0) return;
+        // 先隐藏了原先的加载遮盖
+        addStyle(`
+            .loader_background_1-Rwn { display: none !important }
+        `);
+        // 方案 1：在顶部导航栏中显示“加载中”图标及文字
+        if (localStorage['explore:loading'] == 1) {
+            // 创建并插入“加载中”文字
+            let text = document.createElement('span');
+            text.classList.add('explore-loading-text');
+            text.innerText = '加载中';
+            element.insertBefore(text, element.firstChild);
+            // 创建并插入加载动画
+            let loading = document.createElement('div');
+            loading.classList.add('explore-loading');
+            element.insertBefore(loading, element.firstChild);
+            // CSS
+            addStyle(`
+            /* 加载动画和加载文字的 CSS */
+            .explore-loading {
+                border: 2.5px solid #f3f3f3b0;
+                border-top: 2.5px solid #fff;
+                border-radius: 100%;
+                width: 1em;
+                height: 1em;
+                display: inline-block;
+                animation: spin 2s linear infinite;
+            }
+            .explore-loading-text {
+                margin: 0 1.25em 0 0.3em;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            /* 顶部通知图标稍微有一点歪，和这个加载提示在一起有点难看，要修正下 */
+            i.notification {
+                margin-bottom: 3px;
+            }
+        `);
+        }
+        // 方案 2：在左下角显示不影响浏览的加载提示（原方案）
+        else {
+            // 添加左下角加载提示
+            let loadingElement = document.createElement('div');
+            loadingElement.style = "width: 5em; height: 5em; position: fixed; background-color: #4c97ff; right: 5%; opacity: 0.8; bottom: 5%; border-radius: 8px;";
+            loadingElement.classList.add("explore-loading");
+            loadingElement.innerHTML = '<div class="loader_block-animation_2EgCQ" style="height: 3em;margin: 1em 1em 1em 1.25em;"><img class="loader_top-block_1-yuR" src="https://cdn.gitblock.cn/static/images/209cd016f099f4515cf80dff81e6e0f7.svg" style="margin: 0;"><img class="loader_middle-block_2ma0T" src="https://cdn.gitblock.cn/static/images/ab844ae9647bd855ed2f15b22c6b9337.svg" style="margin: 0;"><img class="loader_bottom-block_ABwSu" src="https://cdn.gitblock.cn/static/images/ee4f8261355c8d3b6fd7228a386c62be.svg" style="margin: 0;"></div>';
+            document.body.appendChild(loadingElement)
+        }
+        // 如果发现了原先的加载遮盖，就显示新的加载提示
+        addFindElement('.loader_background_1-Rwn', (element) => {
+            $('.explore-loading')[0].style.display = 'block';
+            try { $('.explore-loading-text')[0].style.display = 'block'; } catch (e) { }
+            // 轮询直到原先的加载遮盖消失
+            let interval = setInterval(() => {
+                if (!$('.loader_background_1-Rwn')[0]) {
+                    clearInterval(interval);
+                    $('.explore-loading')[0].style.display = 'none';
+                    try { $('.explore-loading-text')[0].style.display = 'none'; } catch (e) { }
+                    // 作品加载完了就得删掉作品的加载动画了，并且恢复作品的大绿旗摁钮、恢复鼠标事件、删除作品封面背景
+                    if ($('.explore-project-loading')[0]) {
+                        // 删掉加载动画
+                        $('.explore-project-loading')[0].remove();
+                        // 恢复大绿旗摁钮
+                        $('.stage_green-flag-overlay_219KT')[0].style.display = 'flex';
+                        // 恢复鼠标事件
+                        $('.controls_controls-container_3ZRI_')[0].style = '';
+                        $('.stage_green-flag-overlay-wrapper_3bCO-')[0].style = '';
+                        // 删除作品封面背景
+                        try { $('.explore-project-cover')[0].remove(); } catch (e) { }
+                    }
+                }
+            }, 50);
+        });
+        // 如果还发现了只有作品加载的时候会出现的“加载消息”，那就得给作品也加上一个加载的小动画+提示
+        addFindElement('div.loader_message-container-outer_oYjTv', (element) => {
+            // 如果现在是在编辑器页面，那就不用添加这个小动画和提示了
+            if (location.pathname.match(/\S+\/Editor/) != null) return;
+            // 创建加载的小动画和提示
+            let projectLoad = document.createElement('div');
+            projectLoad.classList.add('explore-project-loading');
+            projectLoad.innerHTML = `
+                <div class="loader_block-animation_2EgCQ">
+                    <img class="loader_top-block_1-yuR" src="https://cdn.gitblock.cn/static/gui/static/assets/bbbd98ae6a34eac772e34a57aaa5f977.svg">
+                    <img class="loader_middle-block_2ma0T" src="https://cdn.gitblock.cn/static/gui/static/assets/f9dce53613d5f85b311ce9f84423c08b.svg">
+                    <img class="loader_bottom-block_ABwSu" src="https://cdn.gitblock.cn/static/gui/static/assets/ce5820b006d753e4133f46ae776f4d96.svg">
+                </div>
+                <div class="loader_title_28GDz" style="
+                    color: white;
+                ">
+                    <span>载入项目</span
+                ></div>
+            `;
+            $('div.stage_green-flag-overlay-wrapper_3bCO-.box_box_tWy-0')[0].appendChild(projectLoad);
+            // 隐藏作品的大绿旗摁钮
+            $('.stage_green-flag-overlay_219KT')[0].style.display = 'none';
+            // 禁止鼠标事件（别加载着一半就点绿旗开始运行了）
+            $('.controls_controls-container_3ZRI_')[0].style = 'pointer-events: none;';
+            $('.stage_green-flag-overlay-wrapper_3bCO-')[0].style = 'pointer-events: none;';
+            // 用这个“...canvas-wrapper-mobile_2WJLy”是否存在判断是否为手机端布局，不是手机端布局就加上作品封面背景
+            let projectImage = document.createElement('img');
+            projectImage.src = `https://cdn.gitblock.cn/Media?name=${projectThumbId}`;
+            projectImage.classList.add('explore-project-cover');
+            addStyle(`
+                .explore-project-cover {
+                    position: absolute;
+                    top: 0;
+                    width: 100%;
+                    filter: blur(6px);
+                    overflow: hidden;
+                    transform: scale(1.05);
+                }
+                /* 因为这个封面有模糊效果，它可能会超出边界，所以要给最外层的这个设置一个 overflow: hidden;，
+                    再设置一个 border-radius: 0.5rem; 修一下边 */
+                div.stage-wrapper_stage-canvas-wrapper_n2Q5r.box_box_tWy-0 {
+                    border-radius: 0.5rem;
+                    overflow: hidden;
+                }
+                div.stage-wrapper_stage-canvas-wrapper-mobile_2WJLy.box_box_tWy-0 {
+                    border-radius: 0.5rem;
+                    overflow: hidden;
+                }
+            `);
+            insertBefore(projectImage, $('div.stage_green-flag-overlay-wrapper_3bCO-.box_box_tWy-0')[0]);
+        });
+    })
+
+    // 让手机端布局的用户主页也能显示用户 ID、金币、比特石
+    addStyle(`
+        @media (max-width: 768px) {
+            .profile-head_bitStones_1GFkj, .profile-head_goldCoins_TxdJM {
+                display: inline-flex !important;
+            }
+        }
+    `);
+
+    // 在用户主页显示被邀请的信息
+    if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER
+        window.$.ajax({
+            method: 'POST',
+            url: `/WebApi/Users/${location.href.match(/[0-9]+/)}/GetPagedInvitedUsers`,
             data: {
-                forType: Blockey.Utils.getContext().targetType,
-                forId: Blockey.Utils.getContext().target.id,
-                pageIndex: 1,
-                scrollToCommentId: id
+                pageIndex: 1, pageSize: 10
             },
             success: (data) => {
-                data = data.scrollToThread.id == id ? data.scrollToThread : data.replies.filter( d => { return d.id == id } )[0] ;
-                let linkToComment = (location.href.includes('#') ? location.href.split('#')[0] : location.href) + '#commentId=' + id;
-                Blockey.Utils.confirm(
-                    "评论",
-                    `<span class="glyphicon glyphicon-time"></span> <b>评论时间</b><br/> ${ ( new Date(data.createTime) ).toLocaleString() } <br/><br/>
-                     <span class="glyphicon glyphicon-link"></span> <b>评论链接</b><br/> <a href="${linkToComment}">${linkToComment}</a><br/><br/>
-                     <pre>${ data.content }</pre>`
-                )
+                let length = data.invitorPath.length;
+                // 如果这个人是被邀请的，那就在在“xxxx-xx-xx加入”后面加上邀请信息
+                addFindElement('.profile-head_join_HPHzg>small', (element) => {
+                    element.innerHTML +=
+                        length == 1 ? '' :
+                            ` · 由<a href="/Users/${data.invitorPath[length - 2].id}">${encodeHTML(data.invitorPath[length - 2].username)}</a>邀请`;
+                })
             }
         })
     }
-    //
-    // === 评论 ID 显示 & 点击显示详细信息事件 ===
-    if( localStorage.getItem('explore:comment_id') == null ){
-        localStorage.setItem('explore:comment_id',1)
-    }
-    setInterval(()=>{
-        let comments = document.querySelectorAll('.comment_comment_P_hgY');
-        for( let i = 0; i < comments.length; i++ ) {
-            comments[i].querySelector('.comment_time_3A6Cg').innerHTML +=
-                comments[i].querySelector('.comment_time_3A6Cg').innerHTML.includes('#') || localStorage.getItem('explore:comment_id') == 0 || comments[i].id == '' ?
-                `` : ` <span onclick="window.showCommentInfo('${ comments[i].id }')"> #${comments[i].id} </span>`
-        }
-    },1000)
-    //
-    // === 用户信息显示 ===
-    if(location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER
-        // 轮询等待“加入时间”的元素被创建
-        let setUserInfo = setInterval ( () => {
-            if(document.querySelector('.profile-head_join_HPHzg') != null) {
-                // 请求用户邀请 API
-                Blockey.Utils.ajax({
-                    url: `/WebApi/Users/${Blockey.Utils.getContext().target.id}/GetPagedInvitedUsers`,
-                    data: {
-                        pageIndex: 1, pageSize: 60
-                    },
-                    success: (data) => {
-                        let length = data.invitorPath.length;
-                        // 如果这个人是被邀请的，那就在在“xxxx-xx-xx加入”后面加上邀请信息
-                        document.querySelector('.profile-head_join_HPHzg').querySelector('small').innerHTML +=
-                            length == 1 ? '' : ` · 由<a href="/Users/${data.invitorPath[length-2].id}">${ encodeHtml(data.invitorPath[length-2].username) }</a><span onclick="window.open('./${data.invitorPath[length-2].id}/My/InvitedUsers')">邀请</span>`;
-                    }
-                })
-                // 清掉这个轮询
-                clearInterval(setUserInfo);
-            }
-        }, 200);
-    }
-    //
-    // === 修复作品“继续加载”的预览图尺寸问题 ===
-    let fixProjectImage = setInterval ( () => {
-        if(document.querySelector('.img-responsive') != null) {
-            document.querySelector('.img-responsive').style['width'] = '100%';
-            clearInterval(fixProjectImage);
-        }
-    }, 200);
-    //
-    // === 悬停在用户名链接上展示用户卡片 ===
-    if( localStorage.getItem('explore:user_box') == null ){
-        localStorage.setItem('explore:user_box',1)
-    }
-    ;
-    let style = document.createElement('style');
-    style.innerHTML = '.comment_info_2Sjc0 { overflow: inherit !important } .'
-    document.head.appendChild(style);
-    ;
-    window.userInfoCache = {};
-    let userBox = setInterval ( () => {
-        // 真人认证等级、用户等级所对应的 class
-        let humanVerifiedClass = {
-            1: "human-verified-icon_verifiedLevel-1_-X3x2",
-            2: "human-verified-icon_verifiedLevel-2_1Byk3",
-            3: "human-verified-icon_verifiedLevel-3_2hde9",
-            4: "human-verified-icon_verifiedLevel-4_2gbJU",
-            5: "human-verified-icon_verifiedLevel-5_2isZE",
-        },
-            levelClass = (level) => {
-                let classList = {
-                    "level-0": "user-flag-level_level-0_3jAPd",
-                    "level-1": "user-flag-level_level-1_zBVua",
-                    "level-2": "user-flag-level_level-2_m_Fd9",
-                    "level-3": "user-flag-level_level-2_m_Fd9",
-                    "level-4": "user-flag-level_level-4_8-BW2",
-                };
-                if(0<level&&level<10){ return classList["level-0"]; }
-                if(10<=level&&level<20){ return classList["level-1"]; }
-                if(20<=level&&level<30){ return classList["level-2"]; }
-                if(30<=level&&level<40){ return classList["level-3"]; }
-                if(50<=level&&level<60){ return classList["level-4"]; }
-                return classList.level-0;
-            },
-            adminBadge = {
-                1: "239,239,237",
-                2: "198,218,47",
-                3: "105,197,233",
-                4: "196,75,239",
-                5: "237,185,54"
-            };
-        // 给每个评论的用户名加上一个“碰到鼠标”的事件：
-        document.querySelectorAll('a.comment_name_2ZnFZ').forEach( data => data.onmouseenter = (e)=>{
-            if( e.target.classList.contains('inBox') ) return;
-            // 有时候加载比较满慢会同时出现俩用户框，于是我觉得可以让在创建新用户框的时候先检测一下，清除掉不是属于自己的、多余的用户框
-            document.querySelectorAll('.user_box').forEach( d => { if (data.id != d.id ) { d.remove() } } )
-            // 传入数据，在该用户名下生成一个用户简讯框
-            let addUserBox = (data, commentId) => {
-                let dom = document.createElement('div');
-                dom.style = 'z-index: 5000;position: absolute;width: 75%;height: 7.5em;border: 1px #4c97ff solid;border-radius: 3px;background: white;display: flex;align-items: center;';
-                dom.classList.add('user_box');
-                dom.id = commentId;
-                // 如果传入的用户数据在 data.user 下，那就把这个数据再塞到 data 下
-                data = data.user != undefined ? data.user : data;
-                dom.innerHTML = `
-                   ${ data.adminLevel > 0 && localStorage.getItem('explore:show-admin-badge') != 'disabled' ?
-                    `<div style="width: 18px; position: absolute; left: 5em; top: 5em; width: 1em; height: 1em; border-radius: 100%; background: rgb(${adminBadge[data.adminLevel]})"></div>` : ``
-                   }
-                   <img src="https://cdn.gitblock.cn/Media?name=${ data.thumbId != null ? data.thumbId : 'E5E524F9459436757759454D28DA79A0.png' }" style="width: 5em;margin-left: 1em;margin-right: 1em;border: solid 1px rgb(241,241,241);border-radius: 50%;">
-                   <div>
-                      <a href="/Users/${data.id}" class="comment_name_2ZnFZ inBox" target="_blank" style="display: block; vertical-align: sub;">
-                         ${ encodeHtml(data.username) }
-                      </a>
-                      <i class="small human-verified ${ humanVerifiedClass[data.humanVerifiedLevel] }" style="font-size: 125%;${ data.humanVerifiedLevel == 0 ? 'display: none' : '' }"></i>
-                      <small class="user-flag-level_level_1N07n ${levelClass(data.level)}" style="margin-right: 0.5em;">Lv.${data.level}</small>
-                      <span style="color: #888;font-size: 12px;">${data.goldCoins} 金币 </span>
-                      <span style="display: block;color: #888;font-size: 13px;margin-top: 2px;">${new Date(data.createTime).toLocaleDateString().replaceAll('/','-')} 加入</span>
-                   </div>
-                `;
-                e.target.parentNode.appendChild(dom);
-                //console.log(data)
-            };
-            // 从用户名的链接提取用户 ID
-            let userId = Number(e.target.href.match(/[0-9]+/g)[0]);
-            // 如果这个用户的信息没被存下，那就发送请求获取数据
-            if( window.userInfoCache[userId] == undefined ) {
-                let cId = data.parentElement.parentElement.id; // 请求里面的 data 给代表这个链接元素的外面的 data 覆盖掉了......
-                $.ajax({ url: `/WebApi/Users/${e.target.href.match(/[0-9]+/g)[0]}/Get`, method: 'post', success: (data) => {
-                    addUserBox( data, cId );
-                    // 存好这个用户的数据，下回就不再请求了
-                    window.userInfoCache[userId] = data;
-                } });
-            } else {
-                addUserBox( window.userInfoCache[userId], data.parentElement.parentElement.id )
-            }
-        } )
-        // 给每个评论的用户名加上“鼠标离开”的事件
-        document.querySelectorAll('a.comment_name_2ZnFZ').forEach( data => data.onmouseleave = data.classList.contains('inBox') ? null : ()=>{ document.querySelectorAll('.user_box').forEach( d => d.remove() ) } );
-    }, 300);
-    // 若未开启用户简讯框功能，那就清除掉这个轮询
-    if( localStorage.getItem('explore:user_box') == 0 ) {
-        clearInterval(userBox);
-    }
-    //
-    // === 在菜单中插入插件设置 ===
-    // 植入开启插件设置的函数
-    window.openSetting = () => {
-        let commonSwitch = (text, name) => {
-            return `
-            <input type="checkbox" name="${name}"
-                 ${ localStorage.getItem(name) == 1 ? 'checked' : '' }
-                 onchange="
-                    localStorage.setItem('${name}', Number( localStorage.getItem('${name}') ) == 1 ? 0 : 1 );
-                    Blockey.Utils.Alerter.info('刷新以应用更改');
-                 "
-              >
-                 ${text}
-              </input>
+
+    // @在用户主页的关注、粉丝下面添加一个“邀请”（该用户邀请的人）的入口
+    if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 同上
+        addFindElement('div.grid-2fr1.grid-gap-xl', (element) => {
+            // 生成查看该用户邀请过的用户的链接
+            let targetUrl = location.pathname;
+            if (targetUrl.slice(-1) == '/') targetUrl = targetUrl.slice(0, -1);
+            targetUrl += '/My/InvitedUsers'
+            // 找到“关注”、“粉丝”的父级元素
+            let parent = element.childNodes[1];
+            // 生成“邀请”栏的元素
+            let newElement = document.createElement('div');
+            newElement.className = 'panel2_wrapper_3UZFE panel-border-bottom';
+            newElement.innerHTML = `
+                <div class="panel2_panel_1hPqt">
+                    <div class="panel2_panelHead_1Bn6y panel-head">
+                        <h2>
+                            <span class="panel2_border_2Slyp" style="background-color: rgb(77, 151, 255);"></span>邀请
+                        </h2>
+                        <a class="more" href="${encodeURI(targetUrl)}">查看全部»</a>
+                    </div>
+                </div>
             `;
+            // 将此元素放到“关注”、“粉丝”后面
+            parent.appendChild(newElement);
+        });
+    }
+
+    // 修复作品“继续加载”的预览图尺寸问题
+    addFindElement('.img-responsive', (element) => {
+        element.style.width = '100%';
+    })
+
+    // 评论显示评论 ID
+    let commentData = {};
+    addStyle(`
+        .explore-comment-info-icon {
+            margin-right: .4em;
         }
-        Blockey.Utils.confirm('插件设置',`
-        <b>主要功能</b><br/>
-           <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
-              <input type="checkbox" name="userBox"
-                 ${ localStorage.getItem('explore:user_box') == 1 ? 'checked' : '' }
-                 onchange="
-                    localStorage.setItem('explore:user_box', Number( localStorage.getItem('explore:user_box') ) == 1 ? 0 : 1 );
-                    Blockey.Utils.Alerter.info('刷新以应用更改');
-                 "
-              >
-                 启用用户简讯框
-              </input>
-              <img src="https://asset.gitblock.cn/Media?name=d1a2079f6e5b365adef607fc1b2630bf.svg" style="margin-left: 1em" width="80%" /><br/><br/>
-              全屏蓝色加载遮盖设置
-              <div style="margin-left: 0.8em;">
-                <input type="radio" name="loading" value="0" ${ localStorage.getItem('explore:loading') == 0 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 0 ) "/> 不改变 <br />
-                <input type="radio" name="loading" value="1" ${ localStorage.getItem('explore:loading') == 1 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 1 ) "/> 以在左下角显示不影响浏览的加载中提示替代之<br />
-                <input type="radio" name="loading" value="2" ${ localStorage.getItem('explore:loading') == 2 ? 'checked' : '' } onchange=" localStorage.setItem( 'explore:loading', 2 ) "/> 完全隐藏<br />
-              </div>
-              <img src="https://asset.gitblock.cn/Media?name=4d63b6da4cb6b5d4c2b4517540ce008c.svg" style="margin-left: 1em; margin-top: 0.5em; border-radius: 5px;" width="80%" />
-              <br/><br/>
-           </div>
-           <b>小功能</b><br/>
-           <div style="margin-left: 0.8em; margin-top: 0.2em; margin-bottom: 1em;\">
-              ${commonSwitch('启用评论 ID 显示', 'explore:comment_id')}
-              <br/>
-              ${commonSwitch('在手机端也显示用户的金币数量', 'explore:show_money_on_mobile')}
-              <br/>
-              ${commonSwitch('自动跳转 HTTPS', 'explore:jump_to_https')}
-              <br/>
-              ${commonSwitch('去除个人简介的长度限制', 'explore:no_height_limit')}
-              <hr/>
-              <a href="https://github.com/waterblock79/aerfaying-explore" style="display: block;font-weight: bold;text-align: center;">开源于 waterblock79/aerfaying-explore</a>
-           </div>
+    `);
+    // 自动隐藏评论 ID，鼠标 hover 时再显示
+    if (localStorage['explore:hoverId'] == 'true') {
+        addStyle(`
+            .explore-comment-id {
+                display: none;
+            }
+            .comment_base_info:hover .explore-comment-id {
+                display: inline-block;
+            }
         `);
     }
-    // 在用户下拉栏里植入打开插件设置的摁键
-    document.querySelector('.user-dropdown-menu_wrapper_3RsXx').insertBefore( document.createElement('li'), document.querySelector('#nav-settings') ).innerHTML = `<a onclick="openSetting();"><span>插件设置</span></a>`;
-    //
-    // === 转化全屏蓝色加载 ===
-    // explore:loading = 0: 不改变, 1: 隐藏并启用左下加载提示, 2: 完全隐藏
-    if( localStorage.getItem('explore:loading') == null ){
-        localStorage.setItem('explore:loading', 1)
-    }
-    // 如果 explore:loading 设置是 1 或 2
-    if( localStorage.getItem('explore:loading') >= 1 ) {
-        var onLoading = false, onProjectLoading = false;
-        // 把原先的加载遮盖的 Class 加上 Display: none 屏蔽掉
-        ;
-        let style = document.createElement('style');
-        style.innerHTML = '.loader_background_1-Rwn { display: none !important }'
-        document.head.appendChild(style);
-        ;
-        // 一个小工具，传入选择器，若元素存在便返回 true
-        var elementExist = (dom) => { return document.querySelector(dom) != null ? true : false }
-        // 当 explore:loading 设置为 1 便显示左下角加载提示
-        if( localStorage.getItem('explore:loading') == 1 ) {
-            // 轮询检测原先全屏加载出现
-            setInterval(()=>{
-                // 检测全屏加载遮盖是否存在（用了 not 选择器来排除掉咱自己创建的那个作品加载遮盖）
-                if(elementExist('.loader_background_1-Rwn:not(#explore-loading-project)')){
-                    // 如果 onLoading 还没被设为 true，那说明还没添加左下角加载提示，就加上先
-                    if(onLoading == false){
-                        // 隐藏原先全屏加载遮盖
-                        document.querySelector('.loader_background_1-Rwn').style.display = 'none';
-                        // 添加左下角加载提示
-                        let loadingElement = document.createElement('div');
-                        loadingElement.style = "width: 5em; height: 5em; position: fixed; background-color: #4c97ff; right: 5%; opacity: 0.8; bottom: 5%; border-radius: 8px;";
-                        loadingElement.id = "explore-loading";
-                        loadingElement.innerHTML = '<div class="loader_block-animation_2EgCQ" style="height: 3em;margin: 1em 1em 1em 1.25em;"><img class="loader_top-block_1-yuR" src="https://cdn.gitblock.cn/static/images/209cd016f099f4515cf80dff81e6e0f7.svg" style="margin: 0;"><img class="loader_middle-block_2ma0T" src="https://cdn.gitblock.cn/static/images/ab844ae9647bd855ed2f15b22c6b9337.svg" style="margin: 0;"><img class="loader_bottom-block_ABwSu" src="https://cdn.gitblock.cn/static/images/ee4f8261355c8d3b6fd7228a386c62be.svg" style="margin: 0;"></div>';
-                        document.body.appendChild(loadingElement)
-                        // 把 onLoading 设为 true
-                        onLoading = true;
-                        // 然而隐藏了蓝色加载提示，作品加载的时候那个没加载出来的白色舞台就会暴露给用户，于是便要给加载中的作品来一个遮盖。
-                        // 如果 onProjectLoading 还没被设为 true，而且是作品在加载（全屏加载遮盖带有类似“加载拓展”等的提示消息）、作品区已经被创建（检测页面上是否有作品区控制区域，就是绿旗、红六边形那个区域）
-                    } else if ( onLoading == true && onProjectLoading == false && elementExist('.loader_message-container-outer_oYjTv') && elementExist('.stage-header_stage-header-wrapper_8psPs') ) {
-                        // 这里检测是否是手机端依靠的是手机端的舞台区域的 class 是 ...-wrapper-mobile_2WJLy，和电脑端不一样
-                        // 使作品区控制区域不可点击（如果是手机端就直接隐藏了）
-                        document.querySelector('.stage-header_stage-header-wrapper_8psPs').style = elementExist('.stage-wrapper_stage-canvas-wrapper-mobile_2WJLy') ? 'display: none;' : 'opacity: 0.5; pointer-events: none;'; // 使其不可点击
-                        // 对症下药，如果是手机端就改手机端的 ...-wrapper-mobile_2WJLy，如果是电脑端就改电脑端的 ...-wrapper_n2Q5r，给它用 Display: none 隐藏掉
-                        document.querySelector( elementExist('.stage-wrapper_stage-canvas-wrapper-mobile_2WJLy') ? '.stage-wrapper_stage-canvas-wrapper-mobile_2WJLy' : '.stage-wrapper_stage-canvas-wrapper_n2Q5r').style = 'display: none'; // 隐藏
-                        // 在作品区添加加载中的蓝色方框（这里其实是把原来的舞台隐藏掉，拿这个东西放上去，看起来像是给原来的舞台加了遮盖，但其实并不是遮盖）
-                        let projectLoadingDOM = document.createElement('div');
-                        projectLoadingDOM.style = "position: relative; border-radius: 8px; padding: 8px; display: block !important; z-index: 1 !important;";
-                        projectLoadingDOM.id = "explore-loading-project";
-                        projectLoadingDOM.classList.add("loader_background_1-Rwn");
-                        projectLoadingDOM.innerHTML = '<div><div class="loader_block-animation_2EgCQ"><img class="loader_top-block_1-yuR" src="https://cdn.gitblock.cn/static/gui/static/assets/bbbd98ae6a34eac772e34a57aaa5f977.svg"><img class="loader_middle-block_2ma0T" src="https://cdn.gitblock.cn/static/gui/static/assets/f9dce53613d5f85b311ce9f84423c08b.svg"><img class="loader_bottom-block_ABwSu" src="https://cdn.gitblock.cn/static/gui/static/assets/ce5820b006d753e4133f46ae776f4d96.svg"></div><div class="loader_title_28GDz"><span>载入项目</span></div><div class="loader_message-container-outer_oYjTv"><div class="loader_message-container-inner_3ck0d" style="transform: translate(0px, -75px);"><div class="loader_message_rvm_w"><span>正在创建积木……</span></div><div class="loader_message_rvm_w"><span>载入角色……</span></div><div class="loader_message_rvm_w"><span>载入声音……</span></div><div class="loader_message_rvm_w"><span>加载扩展……</span></div><div class="loader_message_rvm_w"><span>正在创建积木……</span></div><div class="loader_message_rvm_w"><span>呼唤小猫……</span></div><div class="loader_message_rvm_w"><span>传送Nano……</span></div><div class="loader_message_rvm_w"><span>给Gobo充气 …</span></div><div class="loader_message_rvm_w"><span>准备表情……</span></div></div></div></div>';
-                        document.querySelector('.stage-wrapper_stage-wrapper_3k56F').appendChild(projectLoadingDOM);
-                        // 把 onProjectLoading 设为 true
-                        onProjectLoading = true;
-                    }
-                    // 如果全屏加载遮盖已经消失了，但是 onLoading 还是 true，说明还没给原来的左下角/作品加载提示移除掉
-                } else if ( onLoading == true ){
-                    // 移除左下角加载提示
-                    document.querySelector('#explore-loading').remove();
-                    if( onProjectLoading == true ) {
-                        // 把原来禁止点击的、隐藏的恢复原状
-                        document.querySelector('.stage-header_stage-header-wrapper_8psPs').style = '';
-                        document.querySelector( elementExist('.stage-wrapper_stage-canvas-wrapper-mobile_2WJLy') ? '.stage-wrapper_stage-canvas-wrapper-mobile_2WJLy' : '.stage-wrapper_stage-canvas-wrapper_n2Q5r').style = '';
-                        // 移除加载的蓝色方框
-                        document.querySelector('#explore-loading-project').remove();
-                        onProjectLoading = false;
-                    }
-                    // 把 onLoading 设为 false
-                    onLoading = false;
-                }
-            },100)
-        }
-    }
-    //
-    // 添加不文明用语警告的“不再提示”
-    window.disableBadWordsWarning = false;
-    setInterval(()=>{
-        if( document.querySelector('.body.box_box_tWy-0') == null ) return;
-        if ( document.querySelector('.body.box_box_tWy-0').innerHTML.includes('正在提交的内容中包含疑似不文明用语') ) {
-            // 禁用了不文明用语警告，那就直接点“确定”
-            if(window.disableBadWordsWarning) {
-                document.querySelector('.ok-button').click();
-                // 如果未禁用不文明用语警告，并且也还没有添加“不再提示”的 checkbox，那就添加上
-            } else if ( !document.querySelector('.body.box_box_tWy-0').childNodes[0].innerHTML.includes('checkbox') ){
-                document.querySelector('.body.box_box_tWy-0').childNodes[0].innerHTML += '<br><input type="checkbox" style="margin-top: 1em;" onclick="window.disableBadWordsWarning = !window.disableBadWordsWarning"> 谢了，我知道该怎么做';
+    addFindElement('.comment_comment_P_hgY', (element) => {
+        // 如果没获取到评论 ID（比如是奥灰推荐位等），就直接退出了
+        if (element.id == '')
+            return;
+        // 给评论时间父级 div 评论信息添加 comment_base_info 类，以便控制显示隐藏
+        element.querySelector('.comment_time_3A6Cg').parentNode.classList.add('comment_base_info');
+        // 插入评论 ID
+        let className = `explore-comment-id-${element.id}`;
+        element.querySelector('.comment_time_3A6Cg').innerHTML += ` <span class="${className} explore-comment-id">#${element.id}</span> `;
+        // 创建评论 ID 被点击事件
+        $(`.${className}`)[0].addEventListener('click', () => {
+            if (!commentData[element.id]) {
+                window.Blockey.Utils.Alerter.info('🚧 找不到这条评论的数据');
+            } else {
+                let linkToComment = (location.href.includes('#') ? location.href.split('#')[0] : location.href) + '#commentId=' + element.id;
+                window.Blockey.Utils.confirm(
+                    "评论",
+                    `
+                        <span class="glyphicon glyphicon-time explore-comment-info-icon"></span><b>评论时间</b>
+                        <br/>
+                        <span>
+                            ${(new Date(commentData[element.id].createTime)).toLocaleString()}
+                        </span>
+                        <br/><br/>
+                        <span class="glyphicon glyphicon-link explore-comment-info-icon"></span><b>评论链接</b>
+                        <br/>
+                        <a href="${linkToComment}">${linkToComment}</a>
+                        <br/><br/>
+                        <pre>${commentData[element.id].content}</pre>
+                    `
+                );
             }
+        });
+    })
+
+    // 给用户主页用户名右边真人认证的图标的位置进行一个矫正
+    addFindElement('.profile-head_name_3PNBk>i', (element) => {
+        element.style.marginLeft = '0.2em';
+        element.style.height = '1em';
+    });
+
+    // 用户备注功能
+    // 给用户添加备注
+    if (!localStorage['explore:remark'])
+        localStorage['explore:remark'] = JSON.stringify({});
+    addFindElement('.profile-head_name_3PNBk>span', (element) => {
+        element.addEventListener('click', () => {
+            window.Blockey.Utils.prompt('更新给 TA 的备注')
+                .then((data) => {
+                    let remark = JSON.parse(localStorage['explore:remark']);
+                    remark[Blockey.Utils.getContext().target.id] = data == '' ? undefined : data;
+                    localStorage['explore:remark'] = JSON.stringify(remark);
+                    location.reload();
+                })
+        })
+    })
+    // 在所有用户名后面添加备注
+    let handleUserName = (element) => {
+        let remark = JSON.parse(localStorage['explore:remark']);
+        let usrId = element.nodeName == 'SPAN' ? Blockey.Utils.getContext().target.id : element.href.split('/')[element.href.split('/').length - 1];
+        if (usrId in remark) {
+            element.innerHTML += `<small style="font-size: 50%">(${remark[usrId]})</small>`;
         }
-    },200);
-    //
-    // 去除主页 maxHeight 的机制
-    if( localStorage.getItem('explore:no_height_limit') == null ) { localStorage.setItem('explore:no_height_limit', 1) }
-    if( localStorage.getItem('explore:no_height_limit') == 1 ) {
-        let noneMaxWidthStyle = document.createElement('style');
-        noneMaxWidthStyle.innerHTML = '.user-home_userInfo_2szc4 { max-height: none !important }';
-        document.head.appendChild(noneMaxWidthStyle);
+    };
+    addFindElement('a.comment_name_2ZnFZ', handleUserName)
+    addFindElement('a.forum-post-card_creator_2rep0', handleUserName)
+    addFindElement('a.forum-post-view_creator_3BR3A', handleUserName)
+    addFindElement('a.user-info_colorLink_1PrTg', handleUserName)
+    addFindElement('a.user-info_wrapper_2acbL', handleUserName)
+    addFindElement('.profile-head_name_3PNBk>span', handleUserName)
+
+    // 去除 maxHeight 限制
+    if(localStorage['explore:noMaxHeight'] == 'true') {
+        addStyle(`
+            .user-home_userInfo_2szc4 { max-height: none !important }
+        `);
     }
-    //
-    // 屏蔽导致 Out of Memory 崩溃的图片
-    setInterval(()=>{
-        document.querySelectorAll('img').forEach( item => {
-            if(item.src.toLowerCase().includes('2732ede113494b63a42c176a86e7fcd9.svg')){
-                let parent = item.parentElement;
-                item.src = '';
-                item.remove();
-            }
-        })
-    },100);
-    // 屏蔽奥的灰烬推荐
-    if( localStorage.getItem('explore:no_ads') == 'on' ) {
-        setInterval(()=>{
-            // 评论区推荐
-            try{
-                document.querySelector('.comment_handleBtn_hP56Y > span.icon.icon-lg').parentNode.parentNode.parentNode.parentNode.remove();
-            } catch(e){}
-            // 作品下方或发现页推荐
-            try {
-                document.querySelector('.project-ads_ad_1uy0F').remove();
-            } catch(e) {}
-        }, 150);
-    }
-    // 使得弹出框（如评论详细信息、原创声明）的内容可以被复制
-    let allowCopyStyle = document.createElement('style');
-    allowCopyStyle.innerHTML = `
-       .modal_modal-content_3brCX {
-          -webkit-user-select: auto !important;
-          -moz-user-select: auto !important;
-          -ms-user-select: auto !important;
-          user-select: auto !important;
-       }
-       .item-attached-thin-modal-body_wrapper_3KdPz { user-select: none; }
-      `
-    document.head.appendChild(allowCopyStyle);
-    // 拯救无法访问的 https://asset.mozhua.org:444/Media?name=*.* 链接
-    setInterval(()=>{
-        document.querySelectorAll('img[src*="https://asset.mozhua.org:444/Media?name="]').forEach( item => {
-            item.src = item.src.replace('https://asset.mozhua.org:444/Media?name=','https://cdn.gitblock.cn/Media?name=');
-        })
-    }, 250);
+    // Your code here...
 })();
