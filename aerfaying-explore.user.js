@@ -584,7 +584,7 @@
         let remark = JSON.parse(localStorage['explore:remark']);
         let usrId = element.nodeName == 'SPAN' ? Blockey.Utils.getContext().target.id : element.href.split('/')[element.href.split('/').length - 1];
         if (usrId in remark) {
-            element.innerHTML += `<small style="font-size: 50%">(${remark[usrId]})</small>`;
+            element.innerHTML += `<small style="font-size: 50%">(${encodeHTML(remark[usrId])})</small>`;
         }
     };
     addFindElement('a.comment_name_2ZnFZ', handleUserName)

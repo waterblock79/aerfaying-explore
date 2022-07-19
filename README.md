@@ -46,3 +46,11 @@
 6. 在手机端显示用户的金币数量
 
    <img src="https://user-images.githubusercontent.com/33573572/175809703-b7809a35-128c-4f39-9253-6517bd691304.png" style="width: 40%;"/>
+
+## 其他
+
+-  用户简讯框功能可以在鼠标悬停于评论区的用户名上时显示一个展示用户信息的简讯框，此功能已单独分离，可以通过以下渠道单独安装：     
+   <img src="https://user-images.githubusercontent.com/33573572/179521385-120be6c1-f315-48ea-af80-9a0b54b64188.png" style="width: 40%;"/>
+
+   - [Github Raw - aerfaying-explore-userbox.user.js](https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore-userbox.user.js)
+   - [jsDeliver CDN](https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@master/aerfaying-explore-userbox.user.js)
