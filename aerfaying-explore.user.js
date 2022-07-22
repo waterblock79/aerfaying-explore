@@ -355,7 +355,10 @@
             i.notification {
                 margin-bottom: 3px;
             }
-        `);
+            `);
+            // 默认隐藏
+            $('.explore-loading')[0].style.display = 'none';
+            try { $('.explore-loading-text')[0].style.display = 'none'; } catch (e) { }
         }
         // 方案 2：在左下角显示不影响浏览的加载提示（原方案）
         else {
@@ -365,6 +368,7 @@
             loadingElement.classList.add("explore-loading");
             loadingElement.innerHTML = '<div class="loader_block-animation_2EgCQ" style="height: 3em;margin: 1em 1em 1em 1.25em;"><img class="loader_top-block_1-yuR" src="https://cdn.gitblock.cn/static/images/209cd016f099f4515cf80dff81e6e0f7.svg" style="margin: 0;"><img class="loader_middle-block_2ma0T" src="https://cdn.gitblock.cn/static/images/ab844ae9647bd855ed2f15b22c6b9337.svg" style="margin: 0;"><img class="loader_bottom-block_ABwSu" src="https://cdn.gitblock.cn/static/images/ee4f8261355c8d3b6fd7228a386c62be.svg" style="margin: 0;"></div>';
             document.body.appendChild(loadingElement)
+            $('.explore-loading')[0].style.display = 'none';
         }
         // 如果发现了原先的加载遮盖，就显示新的加载提示
         addFindElement('.loader_background_1-Rwn', (element) => {
@@ -373,7 +377,6 @@
             // 轮询直到原先的加载遮盖消失
             let interval = setInterval(() => {
                 if (!$('.loader_background_1-Rwn')[0]) {
-                    clearInterval(interval);
                     $('.explore-loading')[0].style.display = 'none';
                     try { $('.explore-loading-text')[0].style.display = 'none'; } catch (e) { }
                     // 作品加载完了就得删掉作品的加载动画了，并且恢复作品的大绿旗摁钮、恢复鼠标事件、删除作品封面背景
@@ -387,6 +390,7 @@
                         $('.stage_green-flag-overlay-wrapper_3bCO-')[0].style = '';
                         // 删除作品封面背景
                         try { $('.explore-project-cover')[0].remove(); } catch (e) { }
+                        clearInterval(interval);
                     }
                 }
             }, 50);
@@ -491,12 +495,16 @@
                         <h2>
                             <span class="panel2_border_2Slyp" style="background-color: rgb(77, 151, 255);"></span>邀请
                         </h2>
-                        <a class="more" href="${encodeURI(targetUrl)}">查看全部»</a>
+                        <a class="more" href="${encodeURI(targetUrl)}">查看»</a>
                     </div>
                 </div>
             `;
             // 将此元素放到“关注”、“粉丝”后面
-            parent.appendChild(newElement);
+            if(parent.childNodes.length == 3) { // 如果是手机端布局，那么关注、邀请后面还会有个评论，这个时候就需要特判一下，让邀请栏放在评论前面
+                parent.insertBefore(newElement, parent.childNodes[2]);
+            } else {
+                parent.appendChild(newElement);
+            }
         });
     }
 
@@ -523,17 +531,29 @@
             }
         `);
     }
+    addStyle(`
+        .explore-comment-id {
+            color: #888;
+            font-size: 12px;
+            margin-left: .5em;
+        }
+        .comment_ipregion_11bpP {
+            margin-left: .5em;
+        }
+    `);
     addFindElement('.comment_comment_P_hgY', (element) => {
         // 如果没获取到评论 ID（比如是奥灰推荐位等），就直接退出了
         if (element.id == '')
             return;
         // 给评论时间父级 div 评论信息添加 comment_base_info 类，以便控制显示隐藏
         element.querySelector('.comment_time_3A6Cg').parentNode.classList.add('comment_base_info');
-        // 插入评论 ID
-        let className = `explore-comment-id-${element.id}`;
-        element.querySelector('.comment_time_3A6Cg').innerHTML += ` <span class="${className} explore-comment-id">#${element.id}</span> `;
+        // 创建评论 ID
+        let newElement = document.createElement('span');
+        newElement.classList.add('explore-comment-id');
+        newElement.classList.add(`explore-comment-id-${element.id}`);
+        newElement.innerHTML = `#${element.id}`;
         // 创建评论 ID 被点击事件
-        $(`.${className}`)[0].addEventListener('click', () => {
+        newElement.addEventListener('click', () => {
             if (!commentData[element.id]) {
                 window.Blockey.Utils.Alerter.info('🚧 找不到这条评论的数据');
             } else {
@@ -551,11 +571,13 @@
                         <br/>
                         <a href="${linkToComment}">${linkToComment}</a>
                         <br/><br/>
-                        <pre>${commentData[element.id].content}</pre>
+                        <pre>${encodeHTML(commentData[element.id].content)}</pre>
                     `
                 );
             }
         });
+        // 在评论时间的右边、IP属地的左边插入评论 ID
+        insertBefore(newElement, element.querySelector('.comment_ipregion_11bpP'));
     })
 
     // 给用户主页用户名右边真人认证的图标的位置进行一个矫正
@@ -588,8 +610,6 @@
         }
     };
     addFindElement('a.comment_name_2ZnFZ', handleUserName)
-    addFindElement('a.forum-post-card_creator_2rep0', handleUserName)
-    addFindElement('a.forum-post-view_creator_3BR3A', handleUserName)
     addFindElement('a.user-info_colorLink_1PrTg', handleUserName)
     addFindElement('a.user-info_wrapper_2acbL', handleUserName)
     addFindElement('.profile-head_name_3PNBk>span:first-child', handleUserName)
