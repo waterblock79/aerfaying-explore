@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         高效探索 - 阿儿法营/稽木世界社区优化插件
+// @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.0.1
+// @version      1.1.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -19,7 +19,7 @@
    https://github.com/waterblock79/aerfaying-explore
 */
 
-(function() {
+(function () {
     'use strict';
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -74,7 +74,7 @@
                 }
             })
         });
-    }, 32);
+    }, 16);
 
 
     //  addStyle(css)
@@ -172,6 +172,11 @@
             text: '禁用个人简介的最大高度限制',
             type: 'check',
             default: true,
+        }, {
+            tag: 'explore:lessRecommendProject',
+            text: '单行显示推荐的精华作品',
+            type: 'check',
+            default: false,
         }
     ];
     // 设置默认值
@@ -269,8 +274,16 @@
         $('button.ok-button')[0].innerHTML = '关闭';
         $('button.ok-button')[0].addEventListener('click', () => { location.reload(); });
     })
-    if (location.pathname.match(/\S+\/Editor/) == null) // 当前页面不是作品编辑器页面时
+    if (location.pathname.match(/\S+\/Editor/) == null && $('#nav-settings').length > 0) {// 当前页面不是作品编辑器页面时，并且已经登陆（#nav-settings 存在）
         insertBefore(settingsButton, $('#nav-settings')[0]);
+    } else { // 如果现在没有插入这个元素，那就静待良机，等这个条件成立了以后再插入元素
+        let waitInsertSettingsButtonInterval = setInterval(() => {
+            if ($('#nav-settings').length > 0 && location.pathname.match(/\S+\/Editor/) == null) {
+                insertBefore(settingsButton, $('#nav-settings')[0]);
+                clearInterval(waitInsertSettingsButtonInterval);
+            }
+        }, 1000)
+    }
 
 
     // 使弹出框（如评论详细信息、原创声明）中的内容可以被复制
@@ -500,7 +513,7 @@
                 </div>
             `;
             // 将此元素放到“关注”、“粉丝”后面
-            if(parent.childNodes.length == 3) { // 如果是手机端布局，那么关注、邀请后面还会有个评论，这个时候就需要特判一下，让邀请栏放在评论前面
+            if (window.innerWidth <= 768) { // 如果是手机端布局，那么关注、邀请后面还会有个评论，这个时候就需要特判一下，让邀请栏放在评论前面
                 parent.insertBefore(newElement, parent.childNodes[2]);
             } else {
                 parent.appendChild(newElement);
@@ -615,10 +628,42 @@
     addFindElement('.profile-head_name_3PNBk>span:first-child', handleUserName)
 
     // 去除 maxHeight 限制
-    if(localStorage['explore:noMaxHeight'] == 'true') {
+    if (localStorage['explore:noMaxHeight'] == 'true') {
         addStyle(`
             .user-home_userInfo_2szc4 { max-height: none !important }
         `);
+    }
+
+
+    // 只显示一行推荐的精华作品
+    if (localStorage['explore:lessRecommendProject'] == 'true') {
+        addStyle(`
+            .home_wrapper_2gKE7 > div:first-child div.home_padding_2Bomd li:nth-child(-n+6) {
+                display:none;
+            }
+        `);
+        // nth-child：https://developer.mozilla.org/zh-CN/docs/Web/CSS/:nth-child
+        // CSS 选择器挺复杂但是也挺有意思的，值得研究
+    }
+
+    // 提示卸载旧版
+    if (localStorage['explore:multiVersionAlert'] != 'blocked') {
+        setTimeout(() => {
+            if (document.querySelectorAll('#nav-explore-setting').length >= 2) { // 如果发现了菜单中有两个插件设置那就说明安装了旧版或多个版本
+                window.Blockey.Utils.confirm(`提示`, `
+                <b>您似乎安装了旧版本或多个版本的插件？这可能会出现冲突问题，建议卸载较旧版本的插件。</b>
+                <br/>
+                <small>
+                    在控制台输入 <code>localStorage['explore:multiVersionAlert'] = 'blocked'</code> 以禁用该警告（不推荐）
+                </small>
+                <img
+                    src="https://asset.gitblock.cn/Media?name=4D19BB71482063DD3FB4187575A408E2.png"
+                    width="80%"
+                    style="margin: .5em; border: 1px solid #ccc"
+                />
+        `);
+            }
+        }, 1000)
     }
     // Your code here...
 })();
