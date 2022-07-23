@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.1.0
+// @version      1.2.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -139,49 +139,44 @@
 
 
     //  插件设置
-    let settingsPage = [
-        {
-            title: true,
-            text: '主要功能'
-        }, {
-            tag: 'explore:loading',
-            text: '全屏蓝色加载遮盖设置',
-            select: [
-                '保持原状',
-                '在导航栏显示“加载中”的文字和动画（最小）',
-                '以在左下角显示不影响浏览的加载中提示替代之（经典）'
-            ],
-            type: 'radio',
-            default: 1,
-            img: '//asset.gitblock.cn/Media?name=a744eb6ea5b2336abbfd73b05ec09c32.svg'
-        }, {
-            title: true,
-            text: '小功能'
-        }, {
-            tag: 'explore:https',
-            text: '自动 HTTPS',
-            type: 'check',
-            default: true,
-        }, {
-            tag: 'explore:hoverId',
-            text: '仅当鼠标悬停在评论上时显示评论 ID',
-            type: 'check',
-            default: false,
-        }, {
-            tag: 'explore:noMaxHeight',
-            text: '禁用个人简介的最大高度限制',
-            type: 'check',
-            default: true,
-        }, {
-            tag: 'explore:lessRecommendProject',
-            text: '单行显示推荐的精华作品',
-            type: 'check',
-            default: false,
-        }
+    let settings = [{
+        tag: 'explore:loading',
+        text: '加载中所显示的提示设置',
+        select: [
+            '保持原状',
+            '在导航栏显示“加载中”的文字和动画（最小）',
+            '在左下角显示不影响浏览的加载中动画（经典）'
+        ],
+        type: 'radio',
+        default: 1,
+        desp: `
+            <a target="_blank" href="/AboutLoding">详见这里</a>
+        `
+    }, {
+        tag: 'explore:https',
+        text: '自动 HTTPS',
+        type: 'check',
+        default: true,
+    }, {
+        tag: 'explore:hoverId',
+        text: '仅当鼠标悬停在评论上时显示评论 ID',
+        type: 'check',
+        default: false,
+    }, {
+        tag: 'explore:noMaxHeight',
+        text: '禁用个人简介的最大高度限制',
+        type: 'check',
+        default: true,
+    }, {
+        tag: 'explore:lessRecommendProject',
+        text: '单行显示推荐的精华作品',
+        type: 'check',
+        default: false,
+    }
     ];
     // 设置默认值
-    settingsPage.forEach((item) => {
-        if (!localStorage[item.tag] && !item.title) {
+    settings.forEach((item) => {
+        if (!localStorage[item.tag]) {
             localStorage[item.tag] = item.default;
         }
     })
@@ -199,20 +194,33 @@
     `)
     settingsButton.addEventListener('click', () => {
         let html = '';
+        // 设置项标题
+        html += `
+            <b style="margin: 0 .3em">
+                设置
+            </b>
+        `
         // 每项的设置
-        settingsPage.forEach((item) => {
-            // 如果是一个标题
-            if (item.title) {
-                html += `
-                    <div style="margin: .3em 0;">
-                        <b>${item.text}</b>
-                    </div>
-                `;
-                return;
-            }
+        settings.forEach((item) => {
             html += `
-                <div style="margin: 0 .5em;">
+                <div style="
+                    margin: .4em .5em;
+                    display: flex;
+                    justify-content: space-between;
+                ">
             `;
+            // 设置名称，如果是 check 类型的设置项，就用 span 包裹，否则就用 b 包裹
+            html += `
+                        <div style="
+                            display: inline-table;
+                        ">
+                            <span>${item.text}</span>
+                            ${item.desp ? `
+                                <br/>
+                                <small>${item.desp}</small>
+                            ` : ''}
+                        </div>
+                    `;
             // Check 类型设置项的勾选控件
             if (item.type == 'check') {
                 html += `
@@ -222,16 +230,10 @@
                         id="${item.tag}"
                         ${localStorage[item.tag] == 'true' ? 'checked' : ''}
                         onchange="localStorage['${item.tag}'] = this.checked"
-                        style="margin-right: .05em;"
+                        style="margin-left: 0.8em; margin-left: 0.05em;"
                     />
                 `;
             }
-            // 设置名称，如果是 check 类型的设置项，就用 span 包裹，否则就用 b 包裹
-            html += `
-                <span>
-                    ${item.text}
-                </span>
-            `;
             // Radio 类型设置项的设置选项
             if (item.type == 'radio') {
                 // 设置选项
@@ -257,10 +259,6 @@
                 });
                 html += `</div>`;
             }
-            // 设置图片
-            if (item.img) {
-                html += `<img style="margin-left: 1em; margin-top: 0.5em; border-radius: 5px;" width="90%" src="${item.img}"/>`;
-            }
             html += '</div>';
         });
         // 设置的尾部显示开源地址
@@ -285,6 +283,28 @@
         }, 1000)
     }
 
+    // 对于加载提示的介绍
+    if(location.pathname == '/AboutLoding') {
+        $('title')[0].innerHTML = `关于加载中的提示 - Aerfaying Explore`;
+        $('.container')[1].innerHTML = `
+            <img class="explore-about-loading" src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/%E5%8A%A0%E8%BD%BD%E6%8F%90%E7%A4%BA.svg">
+        `;
+        $('.container')[1].classList.add('content-container');
+        addStyle(`
+            .content-container {
+                text-align: center;
+            }
+            .explore-about-loading {
+                max-width: 85%;
+                max-height: 30em;
+                background: white;
+                padding: 1em;
+                border-radius: 12px;
+                margin: 0.5em 0 2em 0;
+                box-shadow: 2px 2px 15px rgb(0 0 0 / 5%);
+            }
+        `)
+    }
 
     // 使弹出框（如评论详细信息、原创声明）中的内容可以被复制
     addStyle(`
@@ -589,8 +609,11 @@
                 );
             }
         });
-        // 在评论时间的右边、IP属地的左边插入评论 ID
-        insertBefore(newElement, element.querySelector('.comment_ipregion_11bpP'));
+        // 在评论时间的右边、IP 属地的左边插入评论 ID
+        if (element.querySelector('.comment_ipregion_11bpP') != null)
+            insertBefore(newElement, element.querySelector('.comment_ipregion_11bpP'));
+        else // 适配无 IP 属地评论
+            element.querySelector('.comment_base_info').appendChild(newElement)
     })
 
     // 给用户主页用户名右边真人认证的图标的位置进行一个矫正
@@ -665,5 +688,15 @@
             }
         }, 1000)
     }
+
+    // 输入框长度自适应输入的文字行数
+    addSelectorEvent('textarea.form-control', 'input', (e) => {
+        let lines = e.target.value.split('\n').length;
+        if (lines >= 3) {
+            e.target.style.height = `${24 * lines + 10}px`;
+        } else {
+            e.target.style.height = 'auto';
+        }
+    });
     // Your code here...
 })();
