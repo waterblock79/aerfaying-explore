@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.0
+// @version      1.3.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -502,24 +502,48 @@
     `);
 
     // 在用户主页显示被邀请的信息
-    if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER
-        window.$.ajax({
-            method: 'POST',
-            url: `/WebApi/Users/${location.href.match(/[0-9]+/)}/GetPagedInvitedUsers`,
-            data: {
-                pageIndex: 1, pageSize: 10
-            },
-            success: (data) => {
-                let length = data.invitorPath.length;
-                // 如果这个人是被邀请的，那就在在“xxxx-xx-xx加入”后面加上邀请信息
-                addFindElement('.profile-head_join_HPHzg>small', (element) => {
-                    element.innerHTML +=
-                        length == 1 ? '' :
-                            ` · 由<a href="/Users/${data.invitorPath[length - 2].id}">${encodeHTML(data.invitorPath[length - 2].username)}</a>邀请`;
-                })
+    let invitingData = {};
+    // 获取并储存用户的邀请信息
+    setInterval(() => {
+        // 该用户 ID
+        let userId = location.href.match(/[0-9]+/);
+        if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null && !invitingData[userId]) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER 并且未保存该用户的邀请信息
+            window.$.ajax({
+                method: 'POST',
+                url: `/WebApi/Users/${userId}/GetPagedInvitedUsers`,
+                data: {
+                    pageIndex: 1, pageSize: 10
+                },
+                success: (data) => {
+                    let length = data.invitorPath.length;
+                    // 若该用户不是在邀请链的第一层上，那就是被邀请的用户
+                    if (data.invitorPath.length != 1) {
+                        invitingData[userId] = {
+                            userId: data.invitorPath[length - 2].id,
+                            userName: data.invitorPath[length - 2].username
+                        };
+                    } else { // 如果是在第一层，那就设置一个 false 标记一下 ta 不是被邀请的用户
+                        invitingData[userId] = false;
+                    }
+                }
+            })
+        }
+    }, 64);
+    // 根据获取到的邀请信息进行显示
+    addFindElement('.profile-head_join_HPHzg>small', (element) => {
+        // 获取该用户 ID
+        let userId = location.href.match(/[0-9]+/);
+        // 开始等前面那个轮询查出来这个用户的邀请信息
+        let interval = setInterval(() => {
+            if (invitingData[userId]) { // 如果是被邀请的用户
+                clearInterval(interval);
+                // 在页面上添加邀请信息
+                element.innerHTML += ` · 由<a href="/Users/${invitingData[userId].userId}">${encodeHTML(invitingData[userId].userName)}</a>邀请`;
+            } else if (invitingData[userId] == false) { // 如果是呗标记 false 的非被邀请用户
+                clearInterval(interval);
             }
-        })
-    }
+        }, 64);
+    })
 
     // @在用户主页的关注、粉丝下面添加一个“邀请”（该用户邀请的人）的入口
     if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 同上
