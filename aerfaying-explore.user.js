@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.2.0
+// @version      1.3.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -150,7 +150,7 @@
         type: 'radio',
         default: 1,
         desp: `
-            <a target="_blank" href="/AboutLoding">详见这里</a>
+            <a target="_blank" href="/AboutLoading">详见这里</a>
         `
     }, {
         tag: 'explore:https',
@@ -172,6 +172,12 @@
         text: '单行显示推荐的精华作品',
         type: 'check',
         default: false,
+    }, {
+        tag: 'explore:copyLink',
+        text: '鼠标悬停页面右下角时显示复制此页面 Markdown 链接的按钮',
+        type: 'check',
+        default: false,
+        disabled: !navigator.clipboard
     }
     ];
     // 设置默认值
@@ -185,11 +191,13 @@
     settingsButton.innerHTML = '<a id="nav-explore-setting"><span>插件设置</span></a>';
     addStyle(`
         .explore-settings-label {
-            font-size: unset;
-            margin-bottom: auto;
-            line-height: unset;
-            display: inline;
+            display: inline-table;
+            font-size: 14px;
             font-weight: unset;
+            line-height: unset;
+            margin-bottom: 0px !important;
+            color: #575e75;
+            user-select: none;
         }
     `)
     settingsButton.addEventListener('click', () => {
@@ -211,15 +219,16 @@
             `;
             // 设置名称，如果是 check 类型的设置项，就用 span 包裹，否则就用 b 包裹
             html += `
-                        <div style="
-                            display: inline-table;
-                        ">
+                        <label 
+                            class="explore-settings-label" 
+                            for="${item.tag}"
+                        >
                             <span>${item.text}</span>
                             ${item.desp ? `
                                 <br/>
                                 <small>${item.desp}</small>
                             ` : ''}
-                        </div>
+                        </label>
                     `;
             // Check 类型设置项的勾选控件
             if (item.type == 'check') {
@@ -231,6 +240,7 @@
                         ${localStorage[item.tag] == 'true' ? 'checked' : ''}
                         onchange="localStorage['${item.tag}'] = this.checked"
                         style="margin-left: 0.8em; margin-left: 0.05em;"
+                        ${item.disabled ? 'disabled' : ''}
                     />
                 `;
             }
@@ -244,13 +254,14 @@
                             type="radio"
                             name="${item.tag}"
                             value="${index}"
-                            id="${index}"
+                            id="${item.tag}-${index}"
                             ${index == localStorage[item.tag] ? 'checked' : ''}
                             onchange="localStorage['${item.tag}'] = ${index}"
                         />
                         <label
                             class="explore-settings-label"
-                            for="${index}"
+                            style="display: inline;"
+                            for="${item.tag}-${index}"
                         >
                             ${selectItem}
                         </label>
@@ -284,7 +295,7 @@
     }
 
     // 对于加载提示的介绍
-    if(location.pathname == '/AboutLoding') {
+    if (location.pathname == '/AboutLoading') {
         $('title')[0].innerHTML = `关于加载中的提示 - Aerfaying Explore`;
         $('.container')[1].innerHTML = `
             <img class="explore-about-loading" src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/%E5%8A%A0%E8%BD%BD%E6%8F%90%E7%A4%BA.svg">
@@ -698,5 +709,56 @@
             e.target.style.height = 'auto';
         }
     });
+
+    // 复制页面链接按键
+    if (localStorage['explore:copyLink'] == 'true') {
+        let copyBtn = document.createElement('button');
+        copyBtn.classList.add('explore-copy');
+        copyBtn.addEventListener('click', () => {
+            let title = document.title;
+            let link = location.pathname + location.search + location.hash;
+            if (location.pathname.search(/Studios\/[0-9]+\/Forum\/PostView/) == 1) { // 论坛帖子的网页标题都是“论坛 - 稽木世界”，这里给它加上帖子标题
+                title = $('.title')[0].innerText + ' - ' + title
+            }
+            navigator.clipboard.writeText(`[${title}](${link})`);
+            window.Blockey.Utils.Alerter.info('已复制到剪贴板');
+        });
+        copyBtn.innerHTML = `
+            <i class="lg share color-gray"></i>
+        `;
+        $('.container')[1].appendChild(copyBtn);
+        addStyle(`
+            .explore-copy {
+                width: 3em;
+                height: 3em;
+                right: 0;
+                bottom: 0;
+                background: white;
+                position: fixed;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 1em;
+                border-radius: 50%;
+                box-shadow: 1px 1px 15px rgb(0,0,0,0.15);
+                transition: opacity 0.15s ease-in-out;
+                border: none;
+            }
+
+            .explore-copy:hover {
+                opacity: 0.99;
+            }
+
+            .explore-copy {
+                opacity: 0;
+            }
+
+            .explore-copy > i {
+                padding-left: 0.2em; /* 和自带的 padding-right 中和一下 */
+                font-size: 1.6em;
+                line-height: initial;
+            }
+        `);
+    }
     // Your code here...
 })();
