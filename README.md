@@ -45,6 +45,7 @@
    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/输入框自动调整高度.gif" style="width: 20em"/>
 
 9. 复制页面 Markdown 链接
+
    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/复制链接.png" style="width: 20em"/>
 
 ## 其他
