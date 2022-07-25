@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.1
+// @version      1.3.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -645,7 +645,7 @@
             }
         });
         // 在评论时间的右边、IP 属地的左边插入评论 ID
-        if (element.querySelector('.comment_ipregion_11bpP') != null)
+        if (element.querySelector('.comment_info_2Sjc0 > .comment_base_info > .comment_ipregion_11bpP') != null)
             insertBefore(newElement, element.querySelector('.comment_ipregion_11bpP'));
         else // 适配无 IP 属地评论
             element.querySelector('.comment_base_info').appendChild(newElement)
