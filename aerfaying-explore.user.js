@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.2
+// @version      1.3.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -114,6 +114,9 @@
             response.pagedThreads.items.forEach((comment) => {
                 commentData[comment.id] = comment;
             });
+        }
+        if (settings.url == '/WebApi/Comment/Post') { // 匹配用户发送评论 /WebApi/Comment/Post
+            commentData[response.comment.id] = response.comment;
         }
     });
 
@@ -507,7 +510,7 @@
     setInterval(() => {
         // 该用户 ID
         let userId = location.href.match(/[0-9]+/);
-        if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null && !invitingData[userId]) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER 并且未保存该用户的邀请信息
+        if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null && invitingData[userId] == undefined) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER 并且未保存该用户的邀请信息
             window.$.ajax({
                 method: 'POST',
                 url: `/WebApi/Users/${userId}/GetPagedInvitedUsers`,
