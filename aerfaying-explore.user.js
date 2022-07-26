@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.3
+// @version      1.3.4
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -511,6 +511,7 @@
         // 该用户 ID
         let userId = location.href.match(/[0-9]+/);
         if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null && invitingData[userId] == undefined) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER 并且未保存该用户的邀请信息
+            invitingData[userId] = 'LOADING';
             window.$.ajax({
                 method: 'POST',
                 url: `/WebApi/Users/${userId}/GetPagedInvitedUsers`,
@@ -528,6 +529,9 @@
                     } else { // 如果是在第一层，那就设置一个 false 标记一下 ta 不是被邀请的用户
                         invitingData[userId] = false;
                     }
+                },
+                error: (data) => {
+                    invitingData[userId] = undefined;
                 }
             })
         }
@@ -538,7 +542,7 @@
         let userId = location.href.match(/[0-9]+/);
         // 开始等前面那个轮询查出来这个用户的邀请信息
         let interval = setInterval(() => {
-            if (invitingData[userId]) { // 如果是被邀请的用户
+            if (invitingData[userId] && invitingData[userId] != 'LOADING') { // 如果是被邀请的用户
                 clearInterval(interval);
                 // 在页面上添加邀请信息
                 element.innerHTML += ` · 由<a href="/Users/${invitingData[userId].userId}">${encodeHTML(invitingData[userId].userName)}</a>邀请`;
