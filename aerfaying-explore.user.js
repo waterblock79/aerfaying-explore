@@ -688,7 +688,6 @@
         }
     };
     addFindElement('a.comment_name_2ZnFZ', handleUserName)
-    addFindElement('a.user-info_colorLink_1PrTg', handleUserName)
     addFindElement('a.user-info_wrapper_2acbL', handleUserName)
     addFindElement('.profile-head_name_3PNBk>span:first-child', handleUserName)
 
