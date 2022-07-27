@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.4
+// @version      1.3.5
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -390,9 +390,10 @@
                 height: 1em;
                 display: inline-block;
                 animation: spin 2s linear infinite;
+                margin: 0 0.3em;
             }
             .explore-loading-text {
-                margin: 0 1.25em 0 0.3em;
+                margin: 0 1.25em 0 0;
             }
             @keyframes spin {
                 0% { transform: rotate(0deg); }
@@ -401,6 +402,13 @@
             /* 顶部通知图标稍微有一点歪，和这个加载提示在一起有点难看，要修正下 */
             i.notification {
                 margin-bottom: 3px;
+            }
+            /* 若屏幕过窄就不显示加载文字 */
+            @media screen and (max-width: 380px) {
+                .explore-loading-text {
+                    display: none !important;
+                    width: 0 !important;
+                }
             }
             `);
             // 默认隐藏
