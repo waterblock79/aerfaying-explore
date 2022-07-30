@@ -740,6 +740,11 @@
 
     // 输入框长度自适应输入的文字行数
     addSelectorEvent('textarea.form-control', 'input', (e) => {
+        if ( 
+            element.parentNode.parentNode.parentNode.classList.includes('project-view_descp_IZ1eH')
+        ) { // 若为作品简介编辑则不自动调整
+            return;
+        }
         let lines = e.target.value.split('\n').length;
         if (lines >= 3) {
             e.target.style.height = `${24 * lines + 10}px`;
