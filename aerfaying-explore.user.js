@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.6
+// @version      1.3.7
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -52,6 +52,15 @@
     };
     window.addFindElement = addFindElement;
 
+    // addHrefChangeEvent(callback) 
+    // 当页面 location.href 改变触发该事件
+    let lastHref = null;
+    let hrefChangeEvent = [];
+    const addHrefChangeEvent = (callback) => {
+        hrefChangeEvent.push({
+            callback: callback,
+        });
+    };
 
     //  →_→
     //  通过 setInterval 实现 addFindElement 和 addSelectorEvent。
@@ -74,6 +83,13 @@
                 }
             })
         });
+        // addHrefChangeEvent
+        if (lastHref != location.href) {
+            hrefChangeEvent.forEach((item) => {
+                item.callback(location.href);
+            });
+        }
+        lastHref = location.href;
     }, 16);
 
 
@@ -386,14 +402,15 @@
                 border: 2.5px solid #f3f3f3b0;
                 border-top: 2.5px solid #fff;
                 border-radius: 100%;
-                width: 1em;
-                height: 1em;
+                min-width: 1em;
+                min-height: 1em;
                 display: inline-block;
                 animation: spin 2s linear infinite;
                 margin: 0 0.3em;
             }
             .explore-loading-text {
                 margin: 0 1.25em 0 0;
+                min-width: 2em;
             }
             @keyframes spin {
                 0% { transform: rotate(0deg); }
@@ -512,56 +529,35 @@
         }
     `);
 
-    // 在用户主页显示被邀请的信息
-    let invitingData = {};
-    // 获取并储存用户的邀请信息
-    setInterval(() => {
-        // 该用户 ID
-        let userId = location.href.match(/[0-9]+/);
-        if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null && invitingData[userId] == undefined) { // 若链接匹配 /Users/NUMBER/ 或 /Users/NUMBER 并且未保存该用户的邀请信息
-            invitingData[userId] = 'LOADING';
-            window.$.ajax({
-                method: 'POST',
-                url: `/WebApi/Users/${userId}/GetPagedInvitedUsers`,
-                data: {
-                    pageIndex: 1, pageSize: 10
-                },
-                success: (data) => {
-                    let length = data.invitorPath.length;
-                    // 若该用户不是在邀请链的第一层上，那就是被邀请的用户
-                    if (data.invitorPath.length != 1) {
-                        invitingData[userId] = {
-                            userId: data.invitorPath[length - 2].id,
-                            userName: data.invitorPath[length - 2].username
-                        };
-                    } else { // 如果是在第一层，那就设置一个 false 标记一下 ta 不是被邀请的用户
-                        invitingData[userId] = false;
-                    }
-                },
-                error: (data) => {
-                    invitingData[userId] = undefined;
+    // 在用户主页显示被邀请的信息、显示邀请的用户的入口
+    addHrefChangeEvent((url) => {
+        if (url.match(/\/Users\/([0-9]+\/?)/g) != location.pathname) return; // 如果这个页面不是个用户的主页就退出掉（不匹配 /Users/NUMBER/ 或 /Users/NUMBER）
+        let userId = url.match(/[0-9]+/); // 从 URL 匹配用户 ID
+        window.$.ajax({
+            method: 'POST',
+            url: `/WebApi/Users/${userId}/GetPagedInvitedUsers`,
+            data: {
+                pageIndex: 1, pageSize: 10
+            },
+            success: (data) => {
+                let length = data.invitorPath.length; // 邀请链深度
+                console.log(data)
+                // 若该用户不是在邀请链的第一层上，那就是被邀请的用户
+                if (data.invitorPath.length != 1) {
+                    let userId = data.invitorPath[length - 2].id,
+                        userName =  data.invitorPath[length - 2].username;
+                    let invitingInterval = setInterval(() => {
+                        if($('.profile-head_join_HPHzg>small')[0]){
+                            clearInterval(invitingInterval);
+                            $('.profile-head_join_HPHzg>small')[0].innerHTML += ` · 由<a href="/Users/${userId}">${encodeHTML(userName)}</a>邀请`;
+                        }
+                        console.log(userId)
+                    }, 80);
                 }
-            })
-        }
-    }, 64);
-    // 根据获取到的邀请信息进行显示
-    addFindElement('.profile-head_join_HPHzg>small', (element) => {
-        // 获取该用户 ID
-        let userId = location.href.match(/[0-9]+/);
-        // 开始等前面那个轮询查出来这个用户的邀请信息
-        let interval = setInterval(() => {
-            if (invitingData[userId] && invitingData[userId] != 'LOADING') { // 如果是被邀请的用户
-                clearInterval(interval);
-                // 在页面上添加邀请信息
-                element.innerHTML += ` · 由<a href="/Users/${invitingData[userId].userId}">${encodeHTML(invitingData[userId].userName)}</a>邀请`;
-            } else if (invitingData[userId] == false) { // 如果是呗标记 false 的非被邀请用户
-                clearInterval(interval);
             }
-        }, 64);
-    })
+        })
 
-    // @在用户主页的关注、粉丝下面添加一个“邀请”（该用户邀请的人）的入口
-    if (location.pathname.match(/\/Users\/(\w+\/?)/g) != null) { // 同上
+        // 在关注、粉丝、下面添加一个“显示邀请的用户”的入口
         addFindElement('div.grid-2fr1.grid-gap-xl', (element) => {
             // 生成查看该用户邀请过的用户的链接
             let targetUrl = location.pathname;
@@ -589,7 +585,7 @@
                 parent.appendChild(newElement);
             }
         });
-    }
+    })
 
     // 修复作品“继续加载”的预览图尺寸问题
     addFindElement('.img-responsive', (element) => {
@@ -692,7 +688,10 @@
         let remark = JSON.parse(localStorage['explore:remark']);
         let usrId = element.nodeName == 'SPAN' ? Blockey.Utils.getContext().target.id : element.href.split('/')[element.href.split('/').length - 1];
         if (usrId in remark) {
-            element.innerHTML += `<small style="font-size: 50%">(${encodeHTML(remark[usrId])})</small>`;
+            let newElement = document.createElement('small');
+            newElement.style.fontSize = '50%';
+            newElement.innerHTML = `(${encodeHTML(remark[usrId])})`
+            element.appendChild(newElement);
         }
     };
     addFindElement('a.comment_name_2ZnFZ', handleUserName)
