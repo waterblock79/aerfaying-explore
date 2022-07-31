@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.7
+// @version      1.3.8
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -49,6 +49,8 @@
             callback: callback,
             handledElements: []
         })
+        // 此处返回该任务在 findElement 中的 index，方便后续删除该任务。
+        return findElement.length - 1;
     };
     window.addFindElement = addFindElement;
 
@@ -541,24 +543,20 @@
             },
             success: (data) => {
                 let length = data.invitorPath.length; // 邀请链深度
-                console.log(data)
                 // 若该用户不是在邀请链的第一层上，那就是被邀请的用户
                 if (data.invitorPath.length != 1) {
                     let userId = data.invitorPath[length - 2].id,
                         userName =  data.invitorPath[length - 2].username;
-                    let invitingInterval = setInterval(() => {
-                        if($('.profile-head_join_HPHzg>small')[0]){
-                            clearInterval(invitingInterval);
-                            $('.profile-head_join_HPHzg>small')[0].innerHTML += ` · 由<a href="/Users/${userId}">${encodeHTML(userName)}</a>邀请`;
-                        }
-                        console.log(userId)
-                    }, 80);
+                    let showInvitingUser = addFindElement('.profile-head_join_HPHzg>small', (element) => {
+                        element.innerHTML += ` · 由<a href="/Users/${userId}">${encodeHTML(userName)}</a>邀请`;
+                        delete findElement[showInvitingUser];
+                    });
                 }
             }
         })
 
         // 在关注、粉丝、下面添加一个“显示邀请的用户”的入口
-        addFindElement('div.grid-2fr1.grid-gap-xl', (element) => {
+        let showInvitedUsers = addFindElement('div.grid-2fr1.grid-gap-xl', (element) => {
             // 生成查看该用户邀请过的用户的链接
             let targetUrl = location.pathname;
             if (targetUrl.slice(-1) == '/') targetUrl = targetUrl.slice(0, -1);
@@ -584,6 +582,7 @@
             } else {
                 parent.appendChild(newElement);
             }
+            delete findElement[showInvitedUsers];
         });
     })
 
