@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.9
+// @version      1.3.10
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -749,8 +749,9 @@
     // 输入框长度自适应输入的文字行数
     addSelectorEvent('textarea.form-control', 'input', (e) => {
         if ( 
-            element.parentNode.parentNode.parentNode.classList.includes('project-view_descp_IZ1eH')
+            e.target.parentNode.parentNode.parentNode.classList.contains('project-view_descp_IZ1eH')
         ) { // 若为作品简介编辑则不自动调整
+            e.target.style.height = '295px';
             return;
         }
         let lines = e.target.value.split('\n').length;
