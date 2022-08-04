@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.8
+// @version      1.3.9
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -673,6 +673,10 @@
         localStorage['explore:remark'] = JSON.stringify({});
     addFindElement('.profile-head_name_3PNBk>span', (element) => {
         element.addEventListener('click', () => {
+            if(Blockey.Utils.getContext().target.id === Blockey.INIT_DATA.loggedInUser.id){ // 不能给自己添加备注
+                Blockey.Utils.Alerter.info('不能给自己添加备注');
+                return;
+            }
             window.Blockey.Utils.prompt('更新给 TA 的备注')
                 .then((data) => {
                     let remark = JSON.parse(localStorage['explore:remark']);
@@ -682,6 +686,12 @@
                 })
         })
     })
+    // 如果给自己备注过，那就删除这个备注
+    if(JSON.parse(localStorage['explore:remark'])[Blockey.INIT_DATA.loggedInUser.id]){
+        let remark = JSON.parse(localStorage['explore:remark']);
+        delete remark[Blockey.INIT_DATA.loggedInUser.id];
+        localStorage['explore:remark'] = JSON.stringify(remark);
+    }
     // 在所有用户名后面添加备注
     let handleUserName = (element) => {
         let remark = JSON.parse(localStorage['explore:remark']);
