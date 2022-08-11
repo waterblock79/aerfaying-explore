@@ -48,6 +48,11 @@
 
    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/复制链接.png" style="width: 20em"/>
 
+10. 在评论时添加贴吧表情图片（实验性功能）
+
+   <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情1.png" style="width: 20em"/>
+   <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情2.png" style="width: 20em"/>
+
 ## 其他
 
 - 用户简讯框功能可以在鼠标悬停于评论区的用户名上时显示一个展示用户信息的简讯框，此功能分离于插件，可以通过以下渠道单独安装：

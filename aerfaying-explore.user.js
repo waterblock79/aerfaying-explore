@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.3.10
+// @version      1.4.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -199,6 +199,12 @@
         type: 'check',
         default: false,
         disabled: !navigator.clipboard
+    }, {
+        tag: 'explore:tiebaEmoji',
+        text: '在评论时添加贴吧表情',
+        type: 'check',
+        default: false,
+        desp: '实验性功能，仍在完善中'
     }
     ];
     // 设置默认值
@@ -546,7 +552,7 @@
                 // 若该用户不是在邀请链的第一层上，那就是被邀请的用户
                 if (data.invitorPath.length != 1) {
                     let userId = data.invitorPath[length - 2].id,
-                        userName =  data.invitorPath[length - 2].username;
+                        userName = data.invitorPath[length - 2].username;
                     let showInvitingUser = addFindElement('.profile-head_join_HPHzg>small', (element) => {
                         element.innerHTML += ` · 由<a href="/Users/${userId}">${encodeHTML(userName)}</a>邀请`;
                         delete findElement[showInvitingUser];
@@ -673,7 +679,7 @@
         localStorage['explore:remark'] = JSON.stringify({});
     addFindElement('.profile-head_name_3PNBk>span', (element) => {
         element.addEventListener('click', () => {
-            if(Blockey.Utils.getContext().target.id === Blockey.INIT_DATA.loggedInUser.id){ // 不能给自己添加备注
+            if (Blockey.Utils.getContext().target.id === Blockey.INIT_DATA.loggedInUser.id) { // 不能给自己添加备注
                 Blockey.Utils.Alerter.info('不能给自己添加备注');
                 return;
             }
@@ -687,7 +693,7 @@
         })
     })
     // 如果给自己备注过，那就删除这个备注
-    if(JSON.parse(localStorage['explore:remark'])[Blockey.INIT_DATA.loggedInUser.id]){
+    if (JSON.parse(localStorage['explore:remark'])[Blockey.INIT_DATA.loggedInUser.id]) {
         let remark = JSON.parse(localStorage['explore:remark']);
         delete remark[Blockey.INIT_DATA.loggedInUser.id];
         localStorage['explore:remark'] = JSON.stringify(remark);
@@ -748,17 +754,17 @@
 
     // 输入框长度自适应输入的文字行数
     addSelectorEvent('textarea.form-control', 'input', (e) => {
-        if ( 
-            e.target.parentNode.parentNode.parentNode.classList.contains('project-view_descp_IZ1eH')
-        ) { // 若为作品简介编辑则不自动调整
-            e.target.style.height = '295px';
+        if (
+            e.target.parentNode.parentNode.parentNode.classList.contains('project-view_descp_IZ1eH') ||
+            e.target.parentNode.parentNode.parentNode.classList.contains('forum-post-add_wrapper_2IFFJ') ||
+            e.target.parentNode.parentNode.parentNode.classList.contains('studio-home_studioCard_2r8EZ')
+        ) { // 若为作品简介、帖子、工作室简介编辑则不自动调整
             return;
         }
-        let lines = e.target.value.split('\n').length;
-        if (lines >= 3) {
-            e.target.style.height = `${24 * lines + 10}px`;
-        } else {
+        e.target.style.minHeight = '85px'
+        if (e.target.value.length <= 512) {
             e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight <= 85 ? e.target.scrollHeight + 'px' : (e.target.scrollHeight + 10) + `px`;
         }
     });
 
@@ -811,6 +817,81 @@
                 line-height: initial;
             }
         `);
+    }
+
+    // 贴吧表情
+    if (localStorage['explore:tiebaEmoji'] == 'true') {
+        addFindElement('.control-group', (element) => {
+            // 创建表情选择器元素
+            let emojiSelector = document.createElement('div');
+            let selectorId = (Math.random() * 10 ^ 8).toFixed().toString(16);
+            emojiSelector.classList.add('explore-emoji-selector-' + selectorId);
+            emojiSelector.classList.add('explore-emoji-selector');
+            emojiSelector.style.display = 'none';
+            // 创建表情元素
+            for (let i = 1; i <= 50; i++) {
+                // 使表情 ID 始终为两位
+                if (i < 10) {
+                    i = '0' + i;
+                }
+                // 创建元素并设置 URL 和点击后在输入框添加对应 Markdown
+                let emoji = document.createElement('img');
+                emoji.src = `https://tb2.bdstatic.com/tb/editor/images/face/i_f${i}.png?t=20140803`;
+                emoji.addEventListener('click', (e) => {
+                    let textarea = e.target.parentNode.parentNode.parentNode.parentNode.querySelector('textarea');
+                    // value +=
+                    textarea.value += `![贴吧表情](${e.target.src})`;
+                    // 关闭并 focus 到输入框
+                    emojiSelector.style.display = 'none';
+                    textarea.focus();
+                    // 通过修改 value 的方式更改的输入框内容不会自动更新到 this.state.content 中，因此需要用户手动输入一个字符
+                    Blockey.Utils.Alerter.info('请至少再手动任意输入一个字符以更新输入框内容');
+                })
+                // 创建一个“如果鼠标摁下但是摁的不是自己就关闭自己”的事件
+                addEventListener('click', (e) => {
+                    if (e.target != emojiSelector && !e.target.classList.contains('explore-open-selector')) {
+                        emojiSelector.style.display = 'none';
+                    }
+                })
+                emojiSelector.appendChild(emoji);
+            }
+            insertBefore(emojiSelector, element.childNodes[0]);
+            // 创建打开表情选择器按钮
+            let openSelector = document.createElement('span');
+            openSelector.classList.add('btn');
+            openSelector.classList.add('btn-sm');
+            openSelector.innerText = '表情';
+            openSelector.classList.add('explore-open-selector');
+            openSelector.addEventListener('click', () => {
+                let element = document.querySelector('.explore-emoji-selector-' + selectorId);
+                element.style.display = element.style.display == 'flex' ? 'none' : 'flex';
+            });
+            insertBefore(openSelector, element.childNodes[0]);
+        })
+        addStyle(`
+        .explore-emoji-selector {
+            display: flex;
+            position: absolute;
+            flex-wrap: wrap;
+            z-index: 1999;
+            background: white;
+            box-shadow: 1px 1px 5px rgb(0 0 0 / 20%);
+            border-radius: 4px;
+            padding: 0.5em;
+            margin-right: 4em;
+            left: 30%;
+            margin-top: 0.5em;
+            max-width: 30em;
+            justify-content: center;
+        }
+        .explore-emoji-selector > img {
+            margin: 0.3em !important;
+            width: 2em;
+        }
+        .comment_comment_P_hgY .comment_info_2Sjc0 {
+            overflow: inherit;
+        }
+    `);
     }
     // Your code here...
 })();
