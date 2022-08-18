@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.4.0
+// @version      1.4.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -761,10 +761,10 @@
         ) { // 若为作品简介、帖子、工作室简介编辑则不自动调整
             return;
         }
-        e.target.style.minHeight = '85px'
+        e.target.style.minHeight = '75px'
         if (e.target.value.length <= 512) {
             e.target.style.height = 'auto';
-            e.target.style.height = e.target.scrollHeight <= 85 ? e.target.scrollHeight + 'px' : (e.target.scrollHeight + 10) + `px`;
+            e.target.style.height = e.target.scrollHeight <= 75 ? '75px' : (e.target.scrollHeight + 4) + `px`;
         }
     });
 
