@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.3
+// @version      1.5.4
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.3';
+    const version = '1.5.4';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -954,7 +954,7 @@
     // 检查更新
     if (localStorage['explore:disabledAutoCheckUpdate'] != 'true' && (localStorage['explore:lastCheckUpdate'] == undefined || new Date().getTime() - new Date(localStorage['explore:lastCheckUpdate']).getTime() > 1000 * 60 * 60)) {
         let lastestVersion = checkUpdate();
-        localStorage['explore:lastCheckUpdate'] = new Date().toString();
+        localStorage['explore:lastCheckUpdate'] = new Date().getTime();
         if (lastestVersion) {
             // 显示提示框
             Blockey.Utils.confirm(`发现新版本`,
@@ -975,13 +975,13 @@
                     <small style="display: block">根据 Github 仓库提交信息显示，请以实际更新内容为准！</small>
                 </p>
                 <p>
-                    <small>如果无法更新，请尝试移除该插件并重新按照<a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">文档中的教程</a>进行安装。</small>
+                    <small>获取更新的数据来源以及更新渠道均为 Github，因此可能无法打开链接，或者一些浏览器插件可能就不支持直接通过打开链接更新插件，如果您遇到了这些情况，请尝试移除该插件并重新按照<a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">文档中的教程</a>进行安装，亦或禁用自动检查更新功能。</small>
                 </p>
             `
             );
             // 给 ok-button 加事件
             $('.ok-button')[0].addEventListener('click', () => {
-                window.open('https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js');
+                window.open('https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js');
             })
             // 不再提示摁钮
             let dontShowAgain = document.createElement('button');
