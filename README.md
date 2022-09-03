@@ -4,16 +4,35 @@
 
 这是一个阿儿法营（aerfaying.com）/稽木世界（gitblock.cn）社区 Userscript，提供了一些小功能来优化社区的探索体验。
 
-## 安装
+## 目录
 
-使用此脚本需要安装 Userscript 的相关浏览器插件，推荐[Tampermonkey（电脑端）](https://www.tampermonkey.net/)、[Userscripts（iOS端）](https://apps.apple.com/us/app/userscripts/id1463298887)，安装方法略。
+- [前置浏览器插件](#前置浏览器插件) - 安装浏览器插件来使用 Userscript
+- [安装插件](#安装插件) - 安装这个 Userscript
+- [功能](#功能) - 这个 Userscript 有什么功能？
+- [其他](#其他) - 还有什么 Userscript 可以安装？
 
-若您已经安装完毕相关浏览器插件，您可以通过下方渠道安装此脚本：
+## 前置浏览器插件
+
+使用此脚本需要安装 Userscript 的相关浏览器插件，强烈推荐使用 [Tampermonkey](https://www.tampermonkey.net/) 或 [Userscripts（Safari 浏览器用户）](https://apps.apple.com/us/app/userscripts/id1463298887)，安装方法如下：
+
+- Chrome 浏览器：由于某些限制，请百度“油猴安装教程”，这里推荐参考这篇[少数派文章](https://sspai.com/post/40485)，此处不再赘述。
+- Edge 浏览器：在[Edge 外接程序](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)安装。
+- Firefox 浏览器：在[Firefox Browser ADD-ONS](https://addons.mozilla.org/zh-CN/firefox/addon/tampermonkey/)安装。
+- Safari 浏览器（iOS、MacOS）：App Store 中下载[Userscript](https://apps.apple.com/cn/app/userscripts/id1463298887)。
+- 在 Android 系统：参考知乎文章 [这款浏览器在手机上也能安装油猴等各种扩展插件](https://zhuanlan.zhihu.com/p/31780613)。
+
+## 安装插件
+
+若您已经安装 Tampermonkey 插件，可以通过点击下方链接安装此脚本：
 
 <img src="https://user-images.githubusercontent.com/33573572/169181677-f47bf907-91cb-4513-89f9-3b11b4315787.png" style="width: 5em; margin: 1em;" align="right"/>
 
 - [**jsDeliver（推荐）**](https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js)
 - [Github Raw](https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js)
+
+如果您在使用其他的浏览器插件，请参考您所使用的插件文档并善用搜索引擎进行安装。
+
+如果您是 iOS 或 MacOS 的用户并在使用 Userscripts 这款浏览器插件，请参考[官方文档（英文）](https://github.com/quoid/userscripts#usage)进行安装，可能稍微有点麻烦，请做好心理准备:p
 
 ## 功能
 
@@ -50,8 +69,15 @@
 
 10. 在评论时添加贴吧表情图片（实验性功能）
 
-   <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情1.png" style="width: 20em"/>
-   <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情2.png" style="width: 20em"/>
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情1.png" style="width: 20em"/>  
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情2.png" style="width: 20em"/>  
+
+11. 作品全屏浏览时禁止页面滚动
+
+12. 插件检查更新
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/检查更新.png" style="width: 20em"/>  
 
 ## 其他
 

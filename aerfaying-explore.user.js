@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.4.1
+// @version      1.5.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,6 +21,8 @@
 
 (function () {
     'use strict';
+    const version = '1.5.0';
+
     //  $(selector)
     //  即 document.querySelectorAll(selector)
     const $ = (selector) => document.querySelectorAll(selector);
@@ -153,7 +155,7 @@
 
     //  添加控制台的提示
     console.log(
-        '%cAerfaying-Explore %c\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/',
+        `%cAerfaying-Explore %c\n当前版本：${version}\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/`,
         'font-size: 1.5em; color: dodgerblue;',
         'font-size: 1em; color: black;'
     );
@@ -205,6 +207,11 @@
         type: 'check',
         default: false,
         desp: '实验性功能，仍在完善中'
+    }, {
+        tag: 'explore:fullscreenDisableScroll',
+        text: '作品全屏时禁用鼠标滚轮滚动',
+        type: 'check',
+        default: true
     }
     ];
     // 设置默认值
@@ -237,9 +244,12 @@
         `
         // 每项的设置
         settings.forEach((item) => {
+            if(item.show == false) {
+                return;
+            }
             html += `
                 <div style="
-                    margin: .4em .5em;
+                    margin: .6em .5em;
                     display: flex;
                     justify-content: space-between;
                 ">
@@ -892,6 +902,89 @@
             overflow: inherit;
         }
     `);
+    }
+
+    // 在作品全屏显示时禁用鼠标滚轮滚动
+    if (localStorage['explore:fullscreenDisableScroll'] == 'true') {
+        let scrollY = 0;
+        addEventListener('scroll', () => {
+            if ($('.stage-wrapper_full-screen_3WIKP').length > 0) {
+                document.documentElement.scrollTop = scrollY;
+            } else {
+                scrollY = document.documentElement.scrollTop;
+            }
+        })
+    }
+
+    // 自动检查更新
+    // Get 请求工具函数
+    const RequestInGet = (url) => {
+        let XHR = new XMLHttpRequest();
+        XHR.open('GET', url, false);
+        XHR.send();
+        return XHR.responseText;
+    }; // 不知道为啥用 $.ajax 去请求一个 Javascript 文件会自动执行一遍那个 Javascript 文件...
+    // 获取更新函数，如果有更新则返回一个对象，否则返回 false
+    const checkUpdate = () => {
+        // 获取最新版本号
+        let lastestVersion = RequestInGet('https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js').match(/@version\s+([\d.]+)/)[1]; // copilot 都比你会写正则.jpg
+        // 获取 Commit 消息
+        if(version != lastestVersion) {
+            let lastestCommit = JSON.parse(
+                RequestInGet('https://api.github.com/repos/waterblock79/aerfaying-explore/commits')
+            )[0];
+            return {
+                version: lastestVersion,
+                message: lastestCommit.commit.message,
+                date: new Date(lastestCommit.commit.author.date),
+            }
+        }
+        return false;
+    };
+    // 检查更新
+    if (localStorage['explore:disabledAutoCheckUpdate'] != 'true') {
+        let lastestVersion = checkUpdate();
+        if (lastestVersion) {
+            // 显示提示框
+            Blockey.Utils.confirm(`发现新版本`,
+            `
+                <p style="
+                    margin: 0 auto 1em auto;
+                    display: flex;
+                    width: 10em;
+                    justify-content: space-between;
+                ">
+                    <span style="color: darkgrey;">${version}</span>
+                    <span>→</span>
+                    <span style="color: limegreen;">${lastestVersion.version}</span>
+                </p>
+                <p style="font-size: 100%">
+                    ${lastestVersion.message}<br/>
+                    <small>更新于：${lastestVersion.date.toLocaleString()}</small>
+                    <small style="display: block">根据 Github 仓库提交信息显示，请以实际更新内容为准！</small>
+                </p>
+                <p>
+                    <small>如果无法更新，请尝试移除该插件并重新按照<a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">文档中的教程</a>进行安装。</small>
+                </p>
+            `
+            );
+            // 给 ok-button 加事件
+            $('.ok-button')[0].addEventListener('click', () => {
+                window.open('https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js');
+            })
+            // 不再提示摁钮
+            let dontShowAgain = document.createElement('button');
+            dontShowAgain.classList.add('btn');
+            dontShowAgain.classList.add("ok-button");
+            dontShowAgain.innerText = '不再提示';
+            dontShowAgain.style.background = "coral";
+            dontShowAgain.style.color = "white";
+            dontShowAgain.addEventListener('click', () => {
+                localStorage['explore:disabledAutoCheckUpdate'] = 'true';
+                $('.footer.text-right.box_box_tWy-0>button')[1].click();
+            });
+            insertBefore(dontShowAgain, $('.footer.text-right.box_box_tWy-0>button')[0]);
+        }
     }
     // Your code here...
 })();
