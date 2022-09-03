@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.1
+// @version      1.5.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.1';
+    const version = '1.5.2';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -32,6 +32,12 @@
     //  为全部符合 selector 选择器的元素自动添加 event 事件，若该事件被触发就会执行 callback 回调
     let eventElement = [];
     const addSelectorEvent = (selector, event, callback) => {
+        if (Array.isArray(event)) {
+            for (let i in event) {
+                addSelectorEvent(selector, event[i], callback);
+            }
+            return;
+        }
         eventElement.push({
             selector: selector,
             event: event,
@@ -763,20 +769,22 @@
     }
 
     // 输入框长度自适应输入的文字行数
-    addSelectorEvent('textarea.form-control', 'input', (e) => {
+    const autoHeight = (e) => {
         if (
-            e.target.parentNode.parentNode.parentNode.classList.contains('project-view_descp_IZ1eH') ||
-            e.target.parentNode.parentNode.parentNode.classList.contains('forum-post-add_wrapper_2IFFJ') ||
-            e.target.parentNode.parentNode.parentNode.classList.contains('studio-home_studioCard_2r8EZ')
+            e.parentNode.parentNode.parentNode.classList.contains('project-view_descp_IZ1eH') ||
+            e.parentNode.parentNode.parentNode.classList.contains('forum-post-add_wrapper_2IFFJ') ||
+            e.parentNode.parentNode.parentNode.classList.contains('studio-home_studioCard_2r8EZ')
         ) { // 若为作品简介、帖子、工作室简介编辑则不自动调整
             return;
         }
-        e.target.style.minHeight = '75px'
-        if (e.target.value.length <= 512) {
-            e.target.style.height = 'auto';
-            e.target.style.height = e.target.scrollHeight <= 75 ? '75px' : (e.target.scrollHeight + 4) + `px`;
+        e.style.minHeight = '75px'
+        if (e.value.length <= 512) {
+            e.style.height = 'auto';
+            e.style.height = e.scrollHeight <= 75 ? '75px' : (e.scrollHeight + 4) + `px`;
         }
-    });
+    };
+    addSelectorEvent('textarea.form-control', ['input', 'focus'], (e) => autoHeight(e.target));
+    addFindElement('textarea.form-control', (element) => autoHeight(element));
 
     // 复制页面链接按键
     if (localStorage['explore:copyLink'] == 'true') {
