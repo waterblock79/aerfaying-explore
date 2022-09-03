@@ -2,7 +2,7 @@
   <h1>aerfaying-explore</h1>
 </div>
 
-这是一个阿儿法营（aerfaying.com）/稽木世界（gitblock.cn）社区 Userscript，提供了一些小功能来优化社区的探索体验。
+这是一个阿儿法营（aerfaying.com）/稽木世界（gitblock.cn）社区 Userscript，提供了一些小功能来优化社区的探索体验。本 Userscript 完全开源，欢迎在 Github 仓库 [waterblock79/aerfaying-explore](https://github.com/waterblock79/aerfaying-explore) 提出建议、反馈 Bug 或查看源代码。
 
 ## 目录
 
@@ -78,6 +78,10 @@
 12. 插件检查更新
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/检查更新.png" style="width: 20em"/>  
+
+13. 在手机端的物品页面中显示物品图鉴、拍卖行导航
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/在手机端的物品页面中显示导航.png" style="width: 20em"/>  
 
 ## 其他
 

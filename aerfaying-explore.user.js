@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.0
+// @version      1.5.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.0';
+    const version = '1.5.1';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -244,7 +244,7 @@
         `
         // 每项的设置
         settings.forEach((item) => {
-            if(item.show == false) {
+            if (item.show == false) {
                 return;
             }
             html += `
@@ -929,7 +929,7 @@
         // 获取最新版本号
         let lastestVersion = RequestInGet('https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js').match(/@version\s+([\d.]+)/)[1]; // copilot 都比你会写正则.jpg
         // 获取 Commit 消息
-        if(version != lastestVersion) {
+        if (version != lastestVersion) {
             let lastestCommit = JSON.parse(
                 RequestInGet('https://api.github.com/repos/waterblock79/aerfaying-explore/commits')
             )[0];
@@ -947,7 +947,7 @@
         if (lastestVersion) {
             // 显示提示框
             Blockey.Utils.confirm(`发现新版本`,
-            `
+                `
                 <p style="
                     margin: 0 auto 1em auto;
                     display: flex;
@@ -986,5 +986,56 @@
             insertBefore(dontShowAgain, $('.footer.text-right.box_box_tWy-0>button')[0]);
         }
     }
+    // 在手机端的物品页面也显示物品图鉴、拍卖行按钮
+    addHrefChangeEvent(() => {
+        if (window.location.href.match(/\/Users\/[0-9]*\/My\/Items/)) { // 匹配 /Users/[NUMBER]/My/Items
+            addFindElement('.user-items_wrapper_2Jxfd', (element) => {
+                // 创建元素
+                let newElement = document.createElement('div');
+                newElement.classList.add('navigation-list_wrapper_1RqLP');
+                newElement.classList.add('explore-mobile-items-nav');
+                newElement.innerHTML = `
+                <li class="guide">
+                    <i class="guide"></i>
+                    <div class="navigation-list_content_2S2K9">
+                        <div class="navigation-list_title_SOF67">物品图鉴</div>
+                    </div>
+                </li>
+                <li class="sell">
+                    <i class="auction"></i>
+                    <div class="navigation-list_content_2S2K9">
+                        <div class="navigation-list_title_SOF67">拍卖行</div>
+                    </div>
+                </li>
+            `;
+                // 特别的 CSS
+                addStyle(`
+                @media (min-width: 769px) {
+                    .explore-mobile-items-nav {
+                        display: none;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .navigation-list_wrapper_1RqLP {
+                        display: flex;
+                        justify-content: center;
+                    }
+                    .navigation-list_wrapper_1RqLP>li {
+                        margin: 0 1em 1em 1em;
+                        width: 100%;
+                    }
+                }
+            `);
+                insertBefore(newElement, element);
+                // 绑定点击事件
+                $('.explore-mobile-items-nav>li.guide')[0].addEventListener('click', () => {
+                    window.location.href = '/Items/Guide';
+                });
+                $('.explore-mobile-items-nav>li.sell')[0].addEventListener('click', () => {
+                    window.location.href = '/stars/mars/0001';
+                });
+            })
+        }
+    });
     // Your code here...
 })();
