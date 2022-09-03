@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.2
+// @version      1.5.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.2';
+    const version = '1.5.3';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -934,8 +934,10 @@
     }; // 不知道为啥用 $.ajax 去请求一个 Javascript 文件会自动执行一遍那个 Javascript 文件...
     // 获取更新函数，如果有更新则返回一个对象，否则返回 false
     const checkUpdate = () => {
-        // 获取最新版本号
-        let lastestVersion = RequestInGet('https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js').match(/@version\s+([\d.]+)/)[1]; // copilot 都比你会写正则.jpg
+        // 获取最新版本号（本来用 jsdeliver 的，但是因为缓存的原因，有时候你都更新了 Github 上的最新版本了，但是 jsdeliver 里存的还是旧版，这就导致了会提示用户逆向升级的问题）
+        let lastestFile = atob(JSON.parse(RequestInGet('https://api.github.com/repos/waterblock79/aerfaying-explore/contents/aerfaying-explore.user.js?ref=main')).content);
+        let lastestVersion = lastestFile.match(/@version\s+([\d.]+)/)[1]; // copilot 都比你会写正则.jpg
+        console.log(`从 Github 仓库检查插件更新成功，最新版本 ${lastestVersion}，当前版本 ${version}`);
         // 获取 Commit 消息
         if (version != lastestVersion) {
             let lastestCommit = JSON.parse(
@@ -950,8 +952,9 @@
         return false;
     };
     // 检查更新
-    if (localStorage['explore:disabledAutoCheckUpdate'] != 'true') {
+    if (localStorage['explore:disabledAutoCheckUpdate'] != 'true' && (localStorage['explore:lastCheckUpdate'] == undefined || new Date().getTime() - new Date(localStorage['explore:lastCheckUpdate']).getTime() > 1000 * 60 * 60)) {
         let lastestVersion = checkUpdate();
+        localStorage['explore:lastCheckUpdate'] = new Date().toString();
         if (lastestVersion) {
             // 显示提示框
             Blockey.Utils.confirm(`发现新版本`,
