@@ -16,9 +16,9 @@
 使用此脚本需要安装 Userscript 的相关浏览器插件，强烈推荐使用 [Tampermonkey](https://www.tampermonkey.net/) 或 [Userscripts（Safari 浏览器用户）](https://apps.apple.com/us/app/userscripts/id1463298887)，安装方法如下：
 
 - Chrome 浏览器：由于某些限制，请百度“油猴安装教程”，这里推荐参考这篇[少数派文章](https://sspai.com/post/40485)，此处不再赘述。
-- Edge 浏览器：在[Edge 外接程序](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)安装。
-- Firefox 浏览器：在[Firefox Browser ADD-ONS](https://addons.mozilla.org/zh-CN/firefox/addon/tampermonkey/)安装。
-- Safari 浏览器（iOS、MacOS）：App Store 中下载[Userscript](https://apps.apple.com/cn/app/userscripts/id1463298887)。
+- Edge 浏览器：在 [Edge 外接程序](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd) 安装。
+- Firefox 浏览器：在 [Firefox Browser ADD-ONS](https://addons.mozilla.org/zh-CN/firefox/addon/tampermonkey/) 安装。
+- Safari 浏览器（iOS、MacOS）：App Store 中下载 [Userscript](https://apps.apple.com/cn/app/userscripts/id1463298887)。
 - 在 Android 系统：参考知乎文章 [这款浏览器在手机上也能安装油猴等各种扩展插件](https://zhuanlan.zhihu.com/p/31780613)。
 
 ## 安装插件

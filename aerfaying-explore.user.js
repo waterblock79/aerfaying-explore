@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.6
+// @version      1.5.7
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.6';
+    const version = '1.5.7';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -1052,8 +1052,8 @@
     });
 
     // 任务列表中若经验/金币奖励为 0 则不显示这个图标（原来就是这样的，前些日子改成了即使奖励为 0 也显示一个图标加上一个数字 0）
-    addFindElement('.prize_wrapper_Nbm6l', (element) => {
-        if (element.querySelector('span').innerText == 0) {
+    addFindElement('.mission-prizes_wrapper_2HfN8 > .prize_wrapper_Nbm6l', (element) => {
+        if (element.querySelector('span').innerText === '0') {
             element.style.display = 'none';
         }
     });
