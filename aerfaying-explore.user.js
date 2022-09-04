@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.4
+// @version      1.5.5
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.4';
+    const version = '1.5.5';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -951,6 +951,7 @@
         }
         return false;
     };
+
     // 检查更新
     if (localStorage['explore:disabledAutoCheckUpdate'] != 'true' && (localStorage['explore:lastCheckUpdate'] == undefined || new Date().getTime() - new Date(localStorage['explore:lastCheckUpdate']).getTime() > 1000 * 60 * 60)) {
         let lastestVersion = checkUpdate();
@@ -967,10 +968,10 @@
                 ">
                     <span style="color: darkgrey;">${version}</span>
                     <span>→</span>
-                    <span style="color: limegreen;">${lastestVersion.version}</span>
+                    <span style="color: limegreen;">${encodeHTML(lastestVersion.version)}</span>
                 </p>
                 <p style="font-size: 100%">
-                    ${lastestVersion.message}<br/>
+                    ${encodeHTML(lastestVersion.message)}<br/>
                     <small>更新于：${lastestVersion.date.toLocaleString()}</small>
                     <small style="display: block">根据 Github 仓库提交信息显示，请以实际更新内容为准！</small>
                 </p>
@@ -997,6 +998,7 @@
             insertBefore(dontShowAgain, $('.footer.text-right.box_box_tWy-0>button')[0]);
         }
     }
+
     // 在手机端的物品页面也显示物品图鉴、拍卖行按钮
     addHrefChangeEvent(() => {
         if (window.location.href.match(/\/Users\/[0-9]*\/My\/Items/)) { // 匹配 /Users/[NUMBER]/My/Items
@@ -1046,6 +1048,13 @@
                     window.location.href = '/stars/mars/0001';
                 });
             })
+        }
+    });
+
+    // 任务列表中若经验/金币奖励为 0 则不显示这个图标（原来就是这样的，前些日子改成了即使奖励为 0 也显示一个图标加上一个数字 0）
+    addFindElement('.prize_wrapper_Nbm6l', (element) => {
+        if (element.querySelector('span').innerText == 0) {
+            element.style.display = 'none';
         }
     });
     // Your code here...
