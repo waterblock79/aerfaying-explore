@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.5
+// @version      1.5.6
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -21,7 +21,7 @@
 
 (function () {
     'use strict';
-    const version = '1.5.5';
+    const version = '1.5.6';
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -953,7 +953,7 @@
     };
 
     // 检查更新
-    if (localStorage['explore:disabledAutoCheckUpdate'] != 'true' && (localStorage['explore:lastCheckUpdate'] == undefined || new Date().getTime() - new Date(localStorage['explore:lastCheckUpdate']).getTime() > 1000 * 60 * 60)) {
+    if (localStorage['explore:disabledAutoCheckUpdate'] != 'true' && (localStorage['explore:lastCheckUpdate'] == undefined || new Date().getTime() - new Date(Number(localStorage['explore:lastCheckUpdate'])).getTime() > 1000 * 60 * 60)) {
         let lastestVersion = checkUpdate();
         localStorage['explore:lastCheckUpdate'] = new Date().getTime();
         if (lastestVersion) {
