@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.6.0
+// @version      1.7.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,11 +25,11 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow;
-    const version = '1.6.0';
+    const version = '1.7.0';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
-        if ( GM_getValue && GM_setValue ) {
+        if (GM_getValue && GM_setValue) {
             window.GMAvailable = true;
         } else {
             window.GMAvailable = false;
@@ -94,8 +94,8 @@
         findElement.forEach((item) => {
             $(item.selector).forEach((element) => {
                 if (!item.handledElements.find(e => e == element)) {
-                    item.callback(element);
                     item.handledElements.push(element);
+                    item.callback(element);
                 }
             })
         })
@@ -235,6 +235,17 @@
         text: '作品全屏时禁用鼠标滚轮滚动',
         type: 'check',
         default: true
+    }, {
+        tag: 'explore:previewReply',
+        text: '在消息页面预览回复的内容',
+        type: 'check',
+        default: false,
+        desp: '这个功能可能会导致请求频率较高，慎用！'
+    }, {
+        tag: 'explore:previewCommentMarkdown',
+        text: '在发表评论时预览评论 Markdown',
+        type: 'check',
+        default: false,
     }
     ];
     // 设置默认值
@@ -1130,6 +1141,117 @@
         } else if (autoRedirect == 'gitblock' && window.location.host != 'gitblock.cn') {
             window.location.host = 'gitblock.cn';
         }
+    }
+
+    // 评论区编辑消息时允许预览消息
+    if (localStorage['explore:previewCommentMarkdown'] == 'true') {
+        addStyle(`
+            .comment-panel_comment-panel_3pBsc form {
+                margin-top: 0;
+            }
+
+            .comment-panel_comment-panel_3pBsc form .markdown-editor_previewTab_e6pLX {
+                margin-left: 4px;
+            }
+        `);
+        addFindElement(`.reply-box_replyBox_3Fg5C`, (element) => {
+            // 创建预览摁钮组及其子摁钮
+            let previewButtonGroup = {
+                parent: document.createElement('ul'),
+                edit: document.createElement('li'),
+                preview: document.createElement('li'),
+            }
+            // parent
+            previewButtonGroup.parent.classList.add('nav');
+            previewButtonGroup.parent.classList.add('nav-tabs');
+            previewButtonGroup.parent.classList.add('markdown-editor_previewTab_e6pLX');
+            // edit
+            previewButtonGroup.edit.classList.add('active');
+            previewButtonGroup.edit.innerHTML = `
+            <a>编辑</a>
+        `;
+            previewButtonGroup.edit.addEventListener('click', (e) => {
+                previewButtonGroup.edit.classList.add('active');
+                previewButtonGroup.preview.classList.remove('active');
+                element.querySelector('textarea').style.display = 'block';
+                element.querySelector('div.explore-comment-preview').style.display = 'none';
+            })
+            // preview
+            previewButtonGroup.preview.innerHTML = `
+            <a>预览</a>
+        `;
+            previewButtonGroup.preview.addEventListener('click', (e) => {
+                previewButtonGroup.edit.classList.remove('active');
+                previewButtonGroup.preview.classList.add('active');
+                element.querySelector('textarea').style.display = 'none';
+                element.querySelector('div.explore-comment-preview').style.display = 'block';
+                element.querySelector('div.explore-comment-preview').innerHTML = window.Blockey.Utils.markdownToHtml(element.querySelector('textarea').value.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+            });
+            // 把子摁钮加入摁钮组
+            previewButtonGroup.parent.appendChild(previewButtonGroup.edit);
+            previewButtonGroup.parent.appendChild(previewButtonGroup.preview);
+            // 把摁钮组加入页面
+            insertBefore(previewButtonGroup.parent, element);
+
+            // 添加预览元素
+            let previewElement = document.createElement('div');
+            previewElement.classList.add('explore-comment-preview');
+            previewElement.style.display = 'none';
+            previewElement.style.minHeight = '75px';
+            element.appendChild(previewElement);
+        })
+    }
+
+    // 消息页面预览回复
+    if (localStorage['explore:previewReply'] == 'true') {
+        addFindElement(`.user-messages_card_2ITqW`, (element) => {
+            if (element.querySelector('.user-messages_content_3IDNx p').innerText.match(/在\S*给你 留言 了/)) {
+                // 从链接中掏出来 forType、forId 和 scrollToCommentId
+                let href = element.querySelector('.user-messages_content_3IDNx p > a').getAttribute('href');
+                let forType = href.split('/')[1],
+                    forId = href.split('/')[2].split('#')[0],
+                    scrollToCommentId = href.split('#')[1].split('=')[1];
+                forType = {
+                    'Users': 'User',
+                    'Projects': 'Project',
+                    'Reports': 'Report'
+                }[forType] || null;
+                // 发送请求
+                if (forType) {
+                    window.$.ajax({
+                        url: `/WebApi/Comment/GetPage`, method: 'post', data: {
+                            forType: forType,
+                            forId: forId,
+                            pageIndex: 1,
+                            scrollToCommentId: scrollToCommentId
+                        }, success: (data) => {
+                            // 显示
+                            let comment = data.scrollToThread;
+                            let commentElement = document.createElement('p');
+                            commentElement.classList.add('explore-message-preview');
+                            commentElement.innerHTML = encodeHTML(comment.status == 1 ? comment.content : '[评论不存在]');
+                            element.querySelector('.user-messages_content_3IDNx').appendChild(commentElement);
+                        }
+                    });
+                }
+            }
+        });
+        addStyle(`
+            .explore-message-preview {
+                font-size: 0.75em !important;
+                max-height: 3em;
+                overflow: hidden;
+            }
+
+            .explore-message-preview div {
+                display: inline-block;
+            }
+
+            .explore-message-preview > p {
+                display: inline-block;
+                font-size: 0.75em !important;
+            }
+        `)
     }
     // Your code here...
 })();
