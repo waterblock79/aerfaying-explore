@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.5.7
+// @version      1.6.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -11,7 +11,9 @@
 // @match        http://3eworld.cn/*
 // @match        https://3eworld.cn/*
 // @icon         https://gitblock.cn/Content/logo.ico
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        unsafeWindow
 // @license      MIT
 // ==/UserScript==
 /*
@@ -21,7 +23,20 @@
 
 (function () {
     'use strict';
-    const version = '1.5.7';
+    // 初始化信息
+    var window = unsafeWindow;
+    const version = '1.6.0';
+
+    // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
+    try {
+        if ( GM_getValue && GM_setValue ) {
+            window.GMAvailable = true;
+        } else {
+            window.GMAvailable = false;
+        }
+    } catch (e) {
+        window.GMAvailable = false;
+    }
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
@@ -160,11 +175,13 @@
 
 
     //  添加控制台的提示
-    console.log(
-        `%cAerfaying-Explore %c\n当前版本：${version}\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/`,
-        'font-size: 1.5em; color: dodgerblue;',
-        'font-size: 1em; color: black;'
-    );
+    if (window.top == window.self) {
+        console.log(
+            `%cAerfaying-Explore %c\n当前版本：${version}\n本插件开源于 Github:\nhttps://github.com/waterblock79/aerfaying-explore/`,
+            'font-size: 1.5em; color: dodgerblue;',
+            'font-size: 1em; color: black;'
+        );
+    }
 
 
     //  插件设置
@@ -315,9 +332,40 @@
             }
             html += '</div>';
         });
-        // 设置的尾部显示开源地址
+        // 自动跳转设置
+        html += `
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 1em 0;
+            ">
+                <div style="margin: 0.3em 0">
+                    <b style="display: block">自动跳转</b>
+                    <small>${window.GMAvailable ? '若不理解该选项的用途，请勿修改' : '似乎不支持该功能？'}</small>
+                </div>
+                <select 
+                    style="height: 2em"
+                    id="explore-redirect-selector"
+                    onchange="SetRedirect(document.querySelector('#explore-redirect-selector').value)"
+                    ${window.GMAvailable ? '' : 'disabled'}
+                >
+                    <option value="none">不自动跳转</option>
+                    <option value="aerfaying">自动跳转 aerfaying.com</option>
+                    <option value="gitblock">自动跳转 gitblock.cn</option>
+                    <option value="3eworld">自动跳转 3eworld.cn</option>
+                </select>
+            </div>
+        `;
+        // 设置的尾部显示开源地址、版本
         html += `<hr/>`;
-        html += `<a href="https://github.com/waterblock79/aerfaying-explore" style="display:block;font-weight:bold;text-align:center;"> 开源于 waterblock79/aerfaying-explore </a>`;
+        html += `
+            <div style="text-align:center">
+                <a href="https://waterblock79.github.io/aerfaying-explore/" style="font-weight:600">插件官方页面</a>
+                |
+                <a href="https://github.com/waterblock79/aerfaying-explore" style="font-weight:600">开源仓库</a>
+            </div>`;
+        html += `<span style="display:block;text-align:center;margin-top:0.2em;font-size:85%;"> 插件版本 ${version} </span>`;
         html += `<br/>`;
         // 显示提示框
         Blockey.Utils.confirm('插件设置', html);
@@ -325,7 +373,16 @@
         $('button.ok-button')[0].parentNode.childNodes[0].remove();
         $('button.ok-button')[0].innerHTML = '关闭';
         $('button.ok-button')[0].addEventListener('click', () => { location.reload(); });
+    });
+    // 设置自动跳转选项的初始值
+    addFindElement('select#explore-redirect-selector', (element) => {
+        if (!window.GMAvailable) {
+            element.value = 'none';
+            return;
+        }
+        element.value = GM_getValue('explore:autoRedirect') || 'none';
     })
+    // 插入设置按钮
     if (location.pathname.match(/\S+\/Editor/) == null && $('#nav-settings').length > 0) {// 当前页面不是作品编辑器页面时，并且已经登陆（#nav-settings 存在）
         insertBefore(settingsButton, $('#nav-settings')[0]);
     } else { // 如果现在没有插入这个元素，那就静待良机，等这个条件成立了以后再插入元素
@@ -709,7 +766,7 @@
         })
     })
     // 如果给自己备注过，那就删除这个备注
-    if (JSON.parse(localStorage['explore:remark'])[Blockey.INIT_DATA.loggedInUser.id]) {
+    if (JSON.parse(localStorage['explore:remark'])[Blockey.INIT_DATA.loggedInUser ? Blockey.INIT_DATA.loggedInUser.id : '']) {
         let remark = JSON.parse(localStorage['explore:remark']);
         delete remark[Blockey.INIT_DATA.loggedInUser.id];
         localStorage['explore:remark'] = JSON.stringify(remark);
@@ -1057,5 +1114,22 @@
             element.style.display = 'none';
         }
     });
+
+    // 自动跳转
+    if (window.GMAvailable) {
+        // 受理设置
+        window.SetRedirect = (target) => {
+            GM_setValue('explore:autoRedirect', target);
+        }
+        // 进行跳转
+        let autoRedirect = GM_getValue('explore:autoRedirect', 'none');
+        if (autoRedirect == 'aerfaying' && window.location.host != 'aerfaying.com') {
+            window.location.host = 'aerfaying.com';
+        } else if (autoRedirect == '3eworld' && window.location.host != '3eworld.cn') {
+            window.location.host = '3eworld.cn';
+        } else if (autoRedirect == 'gitblock' && window.location.host != 'gitblock.cn') {
+            window.location.host = 'gitblock.cn';
+        }
+    }
     // Your code here...
 })();
