@@ -82,6 +82,16 @@
 13. 在手机端的物品页面中显示物品图鉴、拍卖行导航
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/在手机端的物品页面中显示导航.png" style="width: 20em"/>  
+    
+14. 在 aerfaying.com、gitblock.cn 和 3eworld.cn 间实现自动跳转
+
+15. 编辑评论时预览 Markdown 效果
+
+     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/%E9%A2%84%E8%A7%88%E8%AF%84%E8%AE%BAMarkdown.png" style="width: 20em"/>  
+     
+16. 在消息页面预览回复的内容
+
+     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/消息页面预览回复内容.png" style="width: 20em"/>  
 
 ## 其他
 
