@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.7.1
+// @version      1.7.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -24,8 +24,8 @@
 (function () {
     'use strict';
     // 初始化信息
-    var window = unsafeWindow;
-    const version = '1.7.1';
+    var window = unsafeWindow || window;
+    const version = '1.7.2';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -1236,7 +1236,7 @@
                             });
                             // 从池子里掏出来需要的那个评论
                             let comment = commentPool[scrollToCommentId];
-                            if(!comment) return;
+                            if (!comment) return;
                             // 创建内容元素
                             let commentElement = document.createElement('p');
                             commentElement.classList.add('explore-message-preview');
@@ -1264,5 +1264,12 @@
             }
         `)
     }
+
+    // 修复在切换过页面大小的情况下，点击绿旗后作品播放器上的遮盖仍存在的问题（详见 issue #31）
+    addFindElement('.stage_green-flag-overlay-wrapper_3bCO-.box_box_tWy-0', (element) => {
+        element.addEventListener('click', (e) => {
+            element.style.display = 'none';
+        })
+    })
     // Your code here...
 })();
