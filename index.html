@@ -258,6 +258,7 @@
                             </span>
                         </div>
                         <div v-show="userscriptFunctionSelected == index">
+                            <div v-if="item.desp" style="font-size: .75em; margin-bottom: .5em;">{{ item.desp }}</div>
                             <!-- 单个图片 -->
                             <img :src="item.image" v-if="typeof item.image == 'string'" />
                             <!-- 多个图片 -->
@@ -268,6 +269,7 @@
                             <div v-if="!item.image" style="padding-bottom: 1.5em; color: grey; font-size: 0.7em;">
                                 暂无图片预览
                             </div>
+                            <!--描述-->
                         </div>
                     </div>
                 </div>
@@ -367,6 +369,11 @@
                         {
                             text: '在消息页面预览回复的内容',
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/消息页面预览回复内容.png'
+                        },
+                        {
+                            text: '使用快捷键 Ctrl + Space 快捷搜索内容',
+                            image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/本地搜索.png',
+                            desp: '这个功能可以在您访问页面时自动索引该页面，您可以通过快捷键 Ctrl + Space 来呼出快捷搜索栏并搜索已索引的内容。全部索引数据将只会存储在本地，不会上传至任何服务器。'
                         }
                     ]
                 }

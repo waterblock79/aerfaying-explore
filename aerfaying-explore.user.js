@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.7.2
+// @version      1.8.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.7.2';
+    const version = '1.8.0';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -95,7 +95,7 @@
             $(item.selector).forEach((element) => {
                 if (!item.handledElements.find(e => e == element)) {
                     item.handledElements.push(element);
-                    item.callback(element);
+                    (async () => { item.callback(element) })();
                 }
             })
         })
@@ -111,7 +111,7 @@
         // addHrefChangeEvent
         if (lastHref != location.href) {
             hrefChangeEvent.forEach((item) => {
-                item.callback(location.href);
+                (async () => { item.callback(location.href) })();
             });
         }
         lastHref = location.href;
@@ -220,7 +220,7 @@
         default: false,
     }, {
         tag: 'explore:copyLink',
-        text: '鼠标悬停页面右下角时显示复制此页面 Markdown 链接的按钮',
+        text: '鼠标悬停页面右下角时显示复制页面 Markdown 链接的按钮',
         type: 'check',
         default: false,
         disabled: !navigator.clipboard
@@ -246,6 +246,12 @@
         text: '在发表评论时预览评论 Markdown',
         type: 'check',
         default: false,
+    }, {
+        tag: 'explore:localSearch',
+        text: '快速搜索',
+        type: 'check',
+        default: true,
+        desp: `存储 ${localStorage['explore:searchDb'] ? JSON.parse(localStorage['explore:searchDb']).length : 0} 条数据，共 ${localStorage['explore:searchDb'] ? (localStorage['explore:searchDb'].length / 1024).toFixed(2) : 0} KB，<a href="/AboutLocalSearch" target="_blank">详细</a>`
     }
     ];
     // 设置默认值
@@ -1270,6 +1276,412 @@
         element.addEventListener('click', (e) => {
             element.style.display = 'none';
         })
+    });
+
+    // 快捷搜索
+    if (localStorage['explore:localSearch'] == 'true') {
+        // 读取搜索数据
+        let searchDb = JSON.parse(localStorage['explore:searchDb'] || '[]');
+
+        // 记录所访问页面的信息，用于快捷搜索
+        let interval;
+        addHrefChangeEvent((href) => {
+            // a. 转 https://gitblock.cn/Users/1 这样的链接为 /Users/1
+            // b. 去除链接中 # 后内容
+            // c. 转小写
+            href = location.href.split(location.origin)[1].split('#')[0].toLowerCase();
+
+            // 字符串完全匹配该正则表达式？
+            let FullyMatched = (reg, str) => {
+                return str.match(reg) && str.match(reg)[0] == str;
+            };
+            // 从 URL 匹配类型
+            let GetTypeFromURL = (url) => {
+                let regs = {
+                    'Studio': /\/studios\/[0-9]*\/?/,
+                    'User': /\/users\/[0-9]*\/?/,
+                    'Project': /\/projects\/[0-9]*\/?/,
+                    'ForumPost': /\/studios\/[0-9]*\/forum\/postview\?postid=[0-9]*/
+                };
+                for (let type in regs) {
+                    if (FullyMatched(regs[type], url.toLowerCase())) return type;
+                }
+                return null;
+            }
+            // 从 Blockey 匹配类型
+            let GetTypeFromBlockey = () => {
+                return window.Blockey.Utils.getContext().targetType;
+            };
+            // 从 Blockey 获取 target
+            let GetTargetFromBlockey = () => {
+                return window.Blockey.Utils.getContext().target;
+            };
+            // 获取记录 Title
+            let GetTitle = (target, type) => {
+                if (type == 'Studio') return target.name;
+                if (type == 'User') return target.username;
+                if (type == 'Project') return target.title;
+                if (type == 'ForumPost') return target.title;
+                return null;
+            };
+            // 获取 Keywords
+            let GetKeywords = (target, type) => {
+                let keywords = [];
+                if (type == 'Studio') {
+                    keywords.push(target.name);
+                    keywords.push(target.id);
+                    keywords.push(target.creator.username);
+                } else if (type == 'User') {
+                    keywords.push(target.username);
+                    keywords.push(target.id);
+                    if (localStorage['explore:remark'] && JSON.parse(localStorage['explore:remark'])[target.id]) {
+                        keywords.push(JSON.parse(localStorage['explore:remark'])[target.id]);
+                    }
+                } else if (type == 'Project') {
+                    keywords.push(target.title);
+                    keywords.push(target.id);
+                    keywords.push(target.creator.username);
+                } else if (type == 'ForumPost') {
+                    keywords.push(target.title);
+                    keywords.push(target.id);
+                } else {
+                    return [];
+                }
+                return keywords;
+            };
+            // 获取 Image
+            let GetImage = (target, type) => {
+                if (type == 'Studio') return target.thumbId;
+                if (type == 'User') return target.thumbId;
+                if (type == 'Project') return target.thumbId;
+                return null;
+            };
+
+            // 记录页面信息
+            let RecordPageInfo = (href) => {
+                if (GetTypeFromURL(href) != null) {
+                    if (searchDb.filter((item) => item.href.toLowerCase() == href.toLowerCase()).length == 0) { // 记录不存在
+                        searchDb.push({
+                            href: location.href.split(location.origin)[1].split('#')[0],
+                            type: GetTypeFromURL(href),
+                            title: GetTitle(GetTargetFromBlockey(), GetTypeFromBlockey()),
+                            keywords: GetKeywords(GetTargetFromBlockey(), GetTypeFromBlockey()),
+                            image: GetImage(GetTargetFromBlockey(), GetTypeFromBlockey())
+                        });
+                        localStorage['explore:searchDb'] = JSON.stringify(searchDb);
+                    } else {
+                        // 更新记录
+                        let record = searchDb.filter((item) => item.href.toLowerCase() == href.toLowerCase())[0];
+                        record.type = GetTypeFromURL(href);
+                        record.title = GetTitle(GetTargetFromBlockey(), GetTypeFromBlockey());
+                        record.keywords = GetKeywords(GetTargetFromBlockey(), GetTypeFromBlockey());
+                        record.image = GetImage(GetTargetFromBlockey(), GetTypeFromBlockey());
+                        localStorage['explore:searchDb'] = JSON.stringify(searchDb);
+                    }
+                }
+            }
+
+            // 等待 Blockey 数据加载完毕然后调用记录函数
+            let waitInterval = setInterval(() => {
+                // 1. GetTargetFromBlockey()
+                //    值为 Null 说明 Blockey 数据还没加载完，得等加载完了再记录
+                // 2. GetTypeFromBlockey() == GetTypeFromURL(href)
+                //    这里的条件是从 URL 完全匹配得到的类型和从 Blockey 获取的类型一致，这么做原因有如下两条：
+                //       a. 防止如 /Users/*/My/InvitedUsers 这类地址混入记录中
+                //       b. ForumPost 最开始没加载完的时候 Blockey 会返回 Studio 类型，不等加载完再记录的话就会出岔子
+                if (GetTargetFromBlockey() && GetTypeFromBlockey() == GetTypeFromURL(href)) {
+                    clearInterval(waitInterval);
+                    RecordPageInfo(href);
+                }
+            }, 100);
+
+        });
+
+
+        // 随机搜索提示语
+        let GetRandomSearchTips = () => {
+            return [
+                '本地搜索的数据来源于您曾访问过的页面',
+                '本地搜索的数据不会上传到服务器，只会存储在您的计算机中',
+                '使用空格来分开多个搜索关键词',
+            ][Math.floor(Math.random() * 3)];
+        };
+        // 映射搜索结果类型到图标
+        let TypeToIcon = (type) => {
+            return {
+                'project': 'projects',
+                'user': 'member',
+                'studio': 'studio',
+            }[type] || 'mission';
+        }
+
+        // 创建样式及元素
+        addStyle(`
+            .explore-quick-search-background {        
+                z-index: 10010;
+                display: flex;
+                left: 0;
+                top: 0;
+                background: rgb(0,0,0,0.25);
+                /* backdrop-filter: blur(2px); 太卡了*/
+                width: 100%;
+                height: 100%;
+                position: fixed;
+            }
+
+            .explore-quick-search { 
+                top: 10%;
+                left: 20%;
+                width: 60%;
+                height: 80%;
+                position: fixed;
+                z-index: 10086;
+            }
+
+            .explore-quick-search input {
+                box-shadow: 0px 0px 15px rgb(0 0 0 / 20%);
+                width: 100%;
+                outline: none;
+                border: none;
+                padding: .75em 1em;
+                font-size: 1.25em;
+                border-radius: 8px;
+                background: rgb(256,256,256,0.925);
+                backdrop-filter: blur(2px);
+            }
+
+            .explore-quick-search .results { 
+                box-shadow: 0px 0px 15px rgb(0 0 0 / 20%);
+                width: 100%;
+                padding: 0.5em 1.5em;
+                border-radius: 8px;
+                margin-top: 1.5em;
+                background: rgb(256,256,256,0.925);
+                backdrop-filter: blur(2px);
+                max-height: calc(100% - 2em);
+                overflow-y: auto;
+            }
+
+            .explore-quick-search .results .result {
+                display: flex;
+                align-items: center;
+                border-bottom: solid 1px rgb(0,0,0,0.075);
+                padding: 1em 0;
+                color: black;
+                text-decoration: none;
+            }
+            .no-result {
+                margin: 1em 0;
+            }
+            .explore-quick-search .results .result:last-child {
+                border: none;
+            }
+
+            .explore-quick-search .results .result .icon {
+                font-size: 2.5em;
+                color: dimgrey;
+                padding: 0;
+            }
+
+            .explore-quick-search .results .result .image {
+                width: 2.5em;
+                padding: 0;
+            }
+
+            .explore-quick-search .results .result .item {
+                cursor: pointer;
+                margin-left: 1em;
+                width: 100%;
+            }
+            .explore-quick-search .results .result .item .title {
+                font-size: 1.5em;
+            }
+            .explore-quick-search .results .result .item .link {
+                font-size: 0.75em;
+                color: grey;
+            }
+        `);
+
+        let searchElement = document.createElement('div');
+        searchElement.style.display = 'none';
+        searchElement.classList.add('explore-quick-search-background');
+        searchElement.innerHTML = `
+            <div class="explore-quick-search">
+                <input type="text" placeholder="进行本地搜索">
+                <div class="results">
+                    <div class="no-result"> ${GetRandomSearchTips()} </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(searchElement);
+
+        // 搜索
+        // 获取相关元素
+        let searchInput = searchElement.querySelector('.explore-quick-search input');
+        let searchResults = searchElement.querySelector('.explore-quick-search .results');
+
+        // 搜索函数
+        let search = (keyword) => {
+            if (keyword == '') return []; // 关键词为空就不搜索了，直接 return 空列表
+            let results = [];
+            // 全部小写化，避免大小写搜不着问题
+            keyword = keyword.toLowerCase();
+            // 按空格分开关键词，并删除全部空关键词
+            let keywordList = keyword.split(' ');
+            keywordList = keywordList.filter((item) => item != '');
+            // 遍历搜索数据
+            // 遍历：关键词列表 => { 索引列表 => { 某索引的关键词列表 } }
+            keywordList.forEach((keyword) => {
+                searchDb.forEach((item, index) => {
+                    // 遍历每个搜索数据下的关键词
+                    item.keywords.forEach((key, index) => {
+                        // 如果发现搜索数据关键词、搜索关键词间存在包含关系，那就把这个结果加入到结果列表里
+                        if (!key) return; // 关键词为空就 return 跳过
+                        key = String(key).toLowerCase();
+                        if ((key.includes(keyword) || keyword.includes(key)) && !results.includes(item)) {
+                            results.push(item);
+                            return;
+                        }
+                    })
+                })
+            });
+            return results;
+        };
+
+        // 当搜索框内容改变时，进行搜索并显示搜索结果
+        searchInput.addEventListener('input', (e) => {
+            let results = search(e.target.value);
+            searchResults.innerHTML = '';
+            if (e.target.value == '') {
+                // 没有输入内容时，显示随机提示
+                searchResults.innerHTML = `
+                    <div class="no-result">
+                        ${GetRandomSearchTips()}
+                    </div>
+                `;
+                return;
+            } else if (results.length > 0) {
+                results.forEach((item, index) => {
+                    searchResults.innerHTML += `
+                        <a class="result" href="${encodeURI(item.href).replace('javascript:', 'scratch:')}">
+                            ${item.image ?
+                            `<img class="image" src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}">` : // 敲黑板，这里如果直接字符串拼接的话，如果这个图片的值为这样的：xxx" onerror="alert(1)，那就会执行 onerror，造成安全性问题
+                            `<i class="icon ${TypeToIcon(item.type)}"></i>`
+                        }
+                            <div class="item">
+                                <div class="title">${encodeHTML(item.title)}</div>
+                                <div class="link">${encodeHTML(item.href)}</div>
+                            </div>
+                        </div>
+                    `;
+                })
+            } else {
+                // 没有搜索结果:
+                searchResults.innerHTML = `
+                    <div class="no-result">
+                        找不到与关键词匹配的内容
+                    </div>
+                `;
+            }
+            /*searchResults.innerHTML += `
+                <a class="result">
+                    <div class="item" style="font-size: 0.8em">
+                        <div class="title">全域搜索此内容 ></div>
+                    </div>
+                </a>
+            `;*/
+            // 本来是要加全域搜索（一键自动搜索帖子、用户、作品）的，但是发现要 ts，公开代码里这么弄不合适，就砍掉了
+        })
+
+        // 呼出搜索框！！！
+        let ctrl = false, space = false;
+        addEventListener('keydown', (e) => {
+            // 呼出
+            if (e.key == 'Control') ctrl = true;
+            if (e.key == ' ') space = true;
+            if (ctrl && space) { // 开启
+                searchElement.style.display = 'block';
+                searchInput.focus();
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input')); // 触发输入事件以更新搜索结果
+            }
+            // Esc 关闭
+            if (e.key == 'Escape') {
+                searchElement.style.display = 'none';
+            }
+        });
+
+        addEventListener('keyup', (e) => {
+            if (e.key == 'Control') ctrl = false;
+            if (e.key == ' ') space = false;
+        });
+
+        // 关闭搜索框。。。
+        searchElement.addEventListener('click', (e) => {
+            if (e.path[0] == searchElement) searchElement.style.display = 'none';
+        });
+    }
+    addFindElement('.layout_content_20yil.layout_margin_3C6Zp .container div', (element) => {
+        if (location.href.includes('AboutLocalSearch')) {
+            document.head.querySelector('title').innerText = '本地搜索'
+            // 修改样式
+            $('.layout_content_20yil.layout_margin_3C6Zp .container')[0].style.textAlign = 'center';
+            $('.layout_content_20yil.layout_margin_3C6Zp .container div')[0].style.margin = '2em 3em';
+            // 创建元素
+            let db = localStorage.getItem('explore:searchDb') ? JSON.parse(localStorage.getItem('explore:searchDb')) : [];
+            element.innerHTML = `
+                <h2 style="font-weight: 500">本地搜索</h2>
+                <p style="font-size: .9em">
+                    本地搜索功能可以在您访问页面时自动索引该页面，您可以通过快捷键<b> Ctrl + Space </b>来呼出快捷搜索栏并搜索已索引内容。全部索引数据将只会存储在本地，不会上传至任何服务器。
+                </p>
+                <p>
+                    共存储 ${db.length} 条数据，占用 ${(JSON.stringify(db).length / 1024).toFixed(2)} KB 存储空间。
+                </p>
+                <p>
+                    <a id="export">导出</a> 
+                    <a id="import">导入</a> 
+                    <a id="delete">清空</a>
+                </p>
+                <pre style="margin: 2em 10%;width: 80%;text-align: left;">${JSON.stringify(db, null, 4)}</pre>
+            `;
+            // copliot 写的导出导入，比我原来想好的方案强
+            // 导出
+            element.querySelector('#export').addEventListener('click', () => {
+                let a = document.createElement('a');
+                a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(db, '', 4));
+                a.download = 'searchDb.json';
+                a.click();
+            });
+            // 导入
+            element.querySelector('#import').addEventListener('click', () => {
+                let input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = () => {
+                    let file = input.files[0];
+                    let reader = new FileReader();
+                    reader.readAsText(file);
+                    reader.onload = () => {
+                        try {
+                            let data = JSON.parse(reader.result);
+                            localStorage.setItem('explore:searchDb', JSON.stringify(data));
+                            alert('导入成功！');
+                            location.reload();
+                        } catch (e) {
+                            alert(e);
+                        }
+                    }
+                }
+                input.click();
+            });
+            // 清空
+            element.querySelector('#delete').addEventListener('click', () => {
+                if (confirm('确定要删除全部本地搜索索引数据吗？') == true) {
+                    localStorage.removeItem('explore:searchDb');
+                    location.reload();
+                }
+            });
+        }
     })
     // Your code here...
 })();

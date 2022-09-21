@@ -62,42 +62,38 @@
 8. 自适应高度的输入框
 
    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/输入框自动调整高度.gif" style="width: 20em"/>
-
 9. 复制页面 Markdown 链接
 
    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/复制链接.png" style="width: 20em"/>
-
 10. 在评论时添加贴吧表情图片（实验性功能）
 
-    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情1.png" style="width: 20em"/>  
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情1.png" style="width: 20em"/>
 
-    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情2.png" style="width: 20em"/>  
-
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情2.png" style="width: 20em"/>
 11. 作品全屏浏览时禁止页面滚动
-
 12. 插件检查更新
 
-    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/检查更新.png" style="width: 20em"/>  
-
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/检查更新.png" style="width: 20em"/>
 13. 在手机端的物品页面中显示物品图鉴、拍卖行导航
 
-    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/在手机端的物品页面中显示导航.png" style="width: 20em"/>  
-    
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/在手机端的物品页面中显示导航.png" style="width: 20em"/>
 14. 在 aerfaying.com、gitblock.cn 和 3eworld.cn 间实现自动跳转
-
 15. 编辑评论时预览 Markdown 效果
 
-     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/%E9%A2%84%E8%A7%88%E8%AF%84%E8%AE%BAMarkdown.png" style="width: 20em"/>  
-     
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/%E9%A2%84%E8%A7%88%E8%AF%84%E8%AE%BAMarkdown.png" style="width: 20em"/>
 16. 在消息页面预览回复的内容
 
-     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/消息页面预览回复内容.png" style="width: 20em"/>  
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/消息页面预览回复内容.png" style="width: 20em"/>
+17. 使用快捷键 Ctrl + Space 快捷搜索内容
+
+	 <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/本地搜索.png" style="width: 20em"/>
+
 
 ## 其他
 
 - 用户简讯框功能可以在鼠标悬停于评论区的用户名上时显示一个展示用户信息的简讯框，此功能分离于插件，可以通过以下渠道单独安装：
 
-   <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/用户简讯框.png" style="width: 20em"/>
+  <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/用户简讯框.png" style="width: 20em"/>
 
   - [Github Raw - aerfaying-explore-userbox.user.js](https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore-userbox.user.js)
   - [jsDeliver CDN](https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@master/aerfaying-explore-userbox.user.js)
