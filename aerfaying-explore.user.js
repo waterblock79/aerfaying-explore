@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.8.1
+// @version      1.8.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.8.1';
+    const version = '1.8.2';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -1176,8 +1176,8 @@
             // edit
             previewButtonGroup.edit.classList.add('active');
             previewButtonGroup.edit.innerHTML = `
-            <a>编辑</a>
-        `;
+                <a>编辑</a>
+            `;
             previewButtonGroup.edit.addEventListener('click', (e) => {
                 previewButtonGroup.edit.classList.add('active');
                 previewButtonGroup.preview.classList.remove('active');
@@ -1186,8 +1186,8 @@
             })
             // preview
             previewButtonGroup.preview.innerHTML = `
-            <a>预览</a>
-        `;
+                <a>预览</a>
+            `;
             previewButtonGroup.preview.addEventListener('click', (e) => {
                 previewButtonGroup.edit.classList.remove('active');
                 previewButtonGroup.preview.classList.add('active');
@@ -1207,6 +1207,11 @@
             previewElement.style.display = 'none';
             previewElement.style.minHeight = '75px';
             element.appendChild(previewElement);
+
+            // 发送消息后自动复位
+            element.parentElement.querySelector('.btn.btn-submit.btn-sm').addEventListener('click', () => {
+                previewButtonGroup.edit.click();
+            })
         })
     }
 
@@ -1623,7 +1628,7 @@
             if (e.path[0] == searchElement) searchElement.style.display = 'none';
         });
     }
-    addFindElement('.layout_content_20yil.layout_margin_3C6Zp .container div', (element) => {
+    addFindElement('.layout_content_20yil.layout_margin_3C6Zp > .container > div', (element) => {
         if (location.href.includes('AboutLocalSearch')) {
             document.head.querySelector('title').innerText = '本地搜索'
             // 修改样式
@@ -1644,8 +1649,22 @@
                     <a id="import">导入</a> 
                     <a id="delete">清空</a>
                 </p>
-                <pre style="margin: 2em 10%;width: 80%;text-align: left;">${JSON.stringify(db, null, 4)}</pre>
+                <div class="markdown_body_1wo0f">
+                    ${window.Blockey.Utils.markdownToHtml(
+                        `|Type|Title|Href|Image|Keywords|  \n|----|-----|----|-----|----|  \n${
+                            encodeHTML(db.map(item => {
+                                return `| ${item.type} | ${item.title} | [${item.href}](${item.href}) | ${item.image ? `![](https://cdn.gitblock.cn/Media?name=${item.image}){.explore-search-datatable-image}` : null} | ${item.keywords.join(', ')} | `;
+                            }).join('  \n'))
+                        }`
+                     )
+                    }
+                </div>
             `;
+            addStyle(`
+                .explore-search-datatable-image {
+                    width: 100px;
+                }
+            `);
             // copliot 写的导出导入，比我原来想好的方案强
             // 导出
             element.querySelector('#export').addEventListener('click', () => {
