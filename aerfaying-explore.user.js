@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.8.2
+// @version      1.8.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.8.2';
+    const version = '1.8.3';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -862,6 +862,7 @@
 
     // 复制页面链接按键
     if (localStorage['explore:copyLink'] == 'true') {
+        // 创建元素
         let copyBtn = document.createElement('button');
         copyBtn.classList.add('explore-copy');
         copyBtn.addEventListener('click', () => {
@@ -876,7 +877,16 @@
         copyBtn.innerHTML = `
             <i class="lg share color-gray"></i>
         `;
-        $('.container')[1].appendChild(copyBtn);
+        // 添加元素到页面
+        let addCopyButtonToDocument = () => {
+            try {
+                $('.container')[1].appendChild(copyBtn);
+            } catch (e) {
+                setTimeout(addCopyButtonToDocument, 200);
+            }
+        };
+        addCopyButtonToDocument();
+        // 创建样式
         addStyle(`
             .explore-copy {
                 width: 3em;
@@ -1651,13 +1661,12 @@
                 </p>
                 <div class="markdown_body_1wo0f">
                     ${window.Blockey.Utils.markdownToHtml(
-                        `|Type|Title|Href|Image|Keywords|  \n|----|-----|----|-----|----|  \n${
-                            encodeHTML(db.map(item => {
-                                return `| ${item.type} | ${item.title} | [${item.href}](${item.href}) | ${item.image ? `![](https://cdn.gitblock.cn/Media?name=${item.image}){.explore-search-datatable-image}` : null} | ${item.keywords.join(', ')} | `;
-                            }).join('  \n'))
-                        }`
-                     )
-                    }
+                `|Type|Title|Href|Image|Keywords|  \n|----|-----|----|-----|----|  \n${encodeHTML(db.map(item => {
+                    return `| ${item.type} | ${item.title} | [${item.href}](${item.href}) | ${item.image ? `![](https://cdn.gitblock.cn/Media?name=${item.image}){.explore-search-datatable-image}` : null} | ${item.keywords.join(', ')} | `;
+                }).join('  \n'))
+                }`
+            )
+                }
                 </div>
             `;
             addStyle(`
