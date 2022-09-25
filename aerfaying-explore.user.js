@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.8.3
+// @version      1.9.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.8.3';
+    const version = '1.9.0';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -240,7 +240,7 @@
         text: '在消息页面预览回复的内容',
         type: 'check',
         default: false,
-        desp: '这个功能可能会导致请求频率较高，慎用！'
+        desp: '实验性功能，请谨慎使用'
     }, {
         tag: 'explore:previewCommentMarkdown',
         text: '在发表评论时预览评论 Markdown',
@@ -644,7 +644,7 @@
                     let userId = data.invitorPath[length - 2].id,
                         userName = data.invitorPath[length - 2].username;
                     let showInvitingUser = addFindElement('.profile-head_join_HPHzg>small', (element) => {
-                        element.innerHTML += ` · 由<a href="/Users/${userId}">${encodeHTML(userName)}</a>邀请`;
+                        element.innerHTML += ` · 由<a href="/Users/${encodeHTML(userId)}">${encodeHTML(userName)}</a>邀请`;
                         delete findElement[showInvitingUser];
                     });
                 }
@@ -725,7 +725,7 @@
         let newElement = document.createElement('span');
         newElement.classList.add('explore-comment-id');
         newElement.classList.add(`explore-comment-id-${element.id}`);
-        newElement.innerHTML = `#${element.id}`;
+        newElement.innerText = `#${element.id}`;
         // 创建评论 ID 被点击事件
         newElement.addEventListener('click', () => {
             if (!commentData[element.id]) {
@@ -1203,7 +1203,7 @@
                 previewButtonGroup.preview.classList.add('active');
                 element.querySelector('textarea').style.display = 'none';
                 element.querySelector('div.explore-comment-preview').style.display = 'block';
-                element.querySelector('div.explore-comment-preview').innerHTML = window.Blockey.Utils.markdownToHtml(element.querySelector('textarea').value.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                element.querySelector('div.explore-comment-preview').innerHTML = window.Blockey.Utils.markdownToHtml(encodeHTML(element.querySelector('textarea').value));
             });
             // 把子摁钮加入摁钮组
             previewButtonGroup.parent.appendChild(previewButtonGroup.edit);
@@ -1227,65 +1227,114 @@
 
     // 消息页面预览回复
     if (localStorage['explore:previewReply'] == 'true') {
-        addFindElement(`.user-messages_card_2ITqW`, (element) => {
-            if (element.querySelector('.user-messages_content_3IDNx p').innerText.match(/在\S*给你 留言 了/)) {
-                // 从链接中掏出来 forType、forId 和 scrollToCommentId
-                let href = element.querySelector('.user-messages_content_3IDNx p > a').getAttribute('href');
-                let forType = href.split('/')[1],
-                    forId = href.split('/')[2].split('#')[0],
-                    scrollToCommentId = href.split('#')[1].split('=')[1];
-                forType = {
-                    'Users': 'User',
-                    'Projects': 'Project',
-                    'Reports': 'Report'
-                }[forType] || null;
-                // 发送请求
-                if (forType) {
-                    window.$.ajax({
-                        url: `/WebApi/Comment/GetPage`, method: 'post', data: {
-                            forType: forType,
-                            forId: forId,
-                            pageIndex: 1,
-                            scrollToCommentId: scrollToCommentId
-                        }, success: (data) => {
-                            // 显示
-                            // 创建一个评论池
-                            let commentPool = {};
-                            data.pagedThreads.items.forEach((item, index) => {
-                                commentPool[item.id] = item;
-                            })
-                            data.replies.forEach((item, index) => {
-                                commentPool[item.id] = item;
-                            });
-                            // 从池子里掏出来需要的那个评论
-                            let comment = commentPool[scrollToCommentId];
-                            if (!comment) return;
-                            // 创建内容元素
-                            let commentElement = document.createElement('p');
-                            commentElement.classList.add('explore-message-preview');
-                            commentElement.innerHTML = encodeHTML(comment.status == 1 ? comment.content : '[评论不存在]');
-                            element.querySelector('.user-messages_content_3IDNx').appendChild(commentElement);
-                        }
-                    });
+        let messagePool = {};
+        // 请求频率锁
+        let requestLock = {
+            time: Date.now(),
+            times: 0
+        };
+        // 截短字符串
+        let Shorter = (str, length) => {
+            if (!length) length = 30;
+            return str.length > length ? `${str.substring(0, length)}...` : str;
+        };
+        let HandleMessagePreview = async (messageListElement) => {
+            let messageList = [];
+            // 从消息元素提取该消息的信息，并加入到列表
+            messageListElement.childNodes.forEach((messageElement) => {
+                // 根本没链接那就直接退出
+                if (!messageElement.querySelector('.user-messages_content_3IDNx p > a')) return;
+                // 提取链接
+                let href = messageElement.querySelector('.user-messages_content_3IDNx p > a').getAttribute('href');
+                // 如果不是消息回复就跳过
+                if (!messageElement.querySelector('.user-messages_content_3IDNx p').innerText.match(/在[\S\s]*给你 留言 了/))
+                    return;
+                // 提取信息并加入列表
+                messageList.push({
+                    element: messageElement,
+                    forType: {
+                        'Users': 'User',
+                        'Projects': 'Project',
+                        'Reports': 'Report'
+                    }[href.split('/')[1]] || null,
+                    forId: href.split('/')[2].split('#')[0],
+                    scrollToCommentId: href.split('#')[1].split('=')[1]
+                });
+            });
+            // 按 forId 整理，forId 相同的消息按顺序同步处理（节约请求）
+            let messageListByForId = {};
+            messageList.forEach((message) => {
+                if (!messageListByForId[message.forType + message.forId]) {
+                    messageListByForId[message.forType + message.forId] = [];
                 }
-            }
+                messageListByForId[message.forType + message.forId].push(message);
+            });
+            console.log(messageListByForId);
+            // 屮，走，忽略
+            Object.keys(messageListByForId).forEach((forId) => {
+                for (let i in messageListByForId[forId]) {
+                    let message = messageListByForId[forId][i];
+                    // 巧了，消息池里已经有这个消息的信息了，那就别请求了，直接用消息池中的数据就好了
+                    if (messagePool[message.scrollToCommentId]) {
+                        let previewElement = document.createElement('p');
+                        previewElement.innerText = Shorter(encodeHTML(messagePool[message.scrollToCommentId]));
+                        previewElement.classList.add('explore-comment-preview');
+                        message.element.querySelector('.user-messages_content_3IDNx p').appendChild(previewElement);
+                    } else {
+                        // 没有那就调 api 请求
+                        // 请求频率锁（如果近一秒内平均请求了超过三次，那就稍等一会）
+                        if( requestLock.time + 1000 < Date.now() ) requestLock.time = Date.now();
+                        while ( (Date.now() - requestLock.time) / requestLock.times < 300 ) {}
+                        window.$.ajax({
+                            url: `/WebApi/Comment/GetPage`, method: 'post', data: {
+                                forType: message.forType,
+                                forId: message.forId,
+                                pageIndex: 1,
+                                scrollToCommentId: message.scrollToCommentId
+                            },
+                            async: false,
+                            success: (data) => {
+                                // 把返回的这些数据加入消息池
+                                data.pagedThreads.items.forEach((m) => {
+                                    messagePool[m.id] = m.status ? m.content : '[评论不存在]';
+                                });
+                                data.replies.forEach((m) => {
+                                    messagePool[m.id] = m.status ? m.content : '[评论不存在]';
+                                });
+                                messagePool[data.scrollToThread.id] = data.scrollToThread.status ? data.scrollToThread.content : '[评论不存在]';
+                                // 把评论内容加入页面
+                                let previewElement = document.createElement('p');
+                                previewElement.innerText = Shorter(encodeHTML(messagePool[message.scrollToCommentId]));
+                                previewElement.classList.add('explore-comment-preview');
+                                message.element.querySelector('.user-messages_content_3IDNx p').appendChild(previewElement);
+                            }
+                        });
+                    }
+                }
+            });
+        };
+        // 页面中的消息更新时触发插入回复预览
+        addFindElement(`.user-messages_card_2ITqW`, (element) => {
+            if (!(element.parentNode.childNodes[0] == element)) return;
+            /*
+                元素的结构是这样的：
+                div.user-messages_wrapper_1hI8b
+                    div.user-messages_card_2ITqW // 每个消息卡片
+                    div.user-messages_card_2ITqW
+                    ......
+                如果要侦测 .user-messages_wrapper_1hI8b 是否变化，这个怪麻烦的（直接判断现在的元素是否先前的元素相等的话，这个里面怎么变，判断的时候都是相等的；判断 innerHTML 是否改变的话，把消息内容插入页面的时候它还会再触发一次，就无限循环了）
+                所以就用 .user-messages_card_2ITqW 是否变化来侦测这个消息列表是否更新了
+                这里判断了一下是否 .user-messages_card_2ITqW 是 .user-messages_wrapper_1hI8b 中第一个元素，防止重复触发
+            */
+            HandleMessagePreview(element.parentNode);
         });
+        // 对应样式
         addStyle(`
-            .explore-message-preview {
-                font-size: 0.75em !important;
-                max-height: 3em;
-                overflow: hidden;
-            }
-
-            .explore-message-preview div {
-                display: inline-block;
-            }
-
-            .explore-message-preview > p {
-                display: inline-block;
+            .explore-comment-preview {
+                margin-top: 0.25em !important;
                 font-size: 0.75em !important;
             }
-        `)
+        `);
     }
 
     // 修复在切换过页面大小的情况下，点击绿旗后作品播放器上的遮盖仍存在的问题（详见 issue #31）
@@ -1526,7 +1575,7 @@
             <div class="explore-quick-search">
                 <input type="text" placeholder="进行本地搜索">
                 <div class="results">
-                    <div class="no-result"> ${GetRandomSearchTips()} </div>
+                    <div class="no-result"> ${encodeHTML(GetRandomSearchTips())} </div>
                 </div>
             </div>
         `;
@@ -1573,7 +1622,7 @@
                 // 没有输入内容时，显示随机提示
                 searchResults.innerHTML = `
                     <div class="no-result">
-                        ${GetRandomSearchTips()}
+                        ${encodeHTML(GetRandomSearchTips())}
                     </div>
                 `;
                 return;
@@ -1583,7 +1632,7 @@
                         <a class="result" href="${encodeURI(item.href).replace('javascript:', 'scratch:')}">
                             ${item.image ?
                             `<img class="image" src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}">` : // 敲黑板，这里如果直接字符串拼接的话，如果这个图片的值为这样的：xxx" onerror="alert(1)，那就会执行 onerror，造成安全性问题
-                            `<i class="icon ${TypeToIcon(item.type)}"></i>`
+                            `<i class="icon ${TypeToIcon(encodeHTML(item.type))}"></i>`
                         }
                             <div class="item">
                                 <div class="title">${encodeHTML(item.title)}</div>
