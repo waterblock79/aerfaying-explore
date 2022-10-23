@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.9.0
+// @version      1.9.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -800,7 +800,7 @@
         }
     };
     addFindElement('a.comment_name_2ZnFZ', handleUserName)
-    addFindElement('a.user-info_wrapper_2acbL', handleUserName)
+    addFindElement('a.user-info_wrapper_2acbL:not(.event-component_info_2c3Jo > a)', handleUserName)
     addFindElement('.profile-head_name_3PNBk>span:first-child', handleUserName)
 
     // 去除 maxHeight 限制
@@ -859,6 +859,12 @@
     };
     addSelectorEvent('textarea.form-control', ['input', 'focus'], (e) => autoHeight(e.target));
     addFindElement('textarea.form-control', (element) => autoHeight(element));
+    // 发送消息后自动复位
+    addFindElement('textarea.form-control', (element) => {
+        element.parentElement.parentElement.parentElement.querySelector('.btn.btn-submit.btn-sm').addEventListener('click', () => {
+            element.style.height = '75px';
+        })
+    });
 
     // 复制页面链接按键
     if (localStorage['explore:copyLink'] == 'true') {
@@ -1283,8 +1289,8 @@
                     } else {
                         // 没有那就调 api 请求
                         // 请求频率锁（如果近一秒内平均请求了超过三次，那就稍等一会）
-                        if( requestLock.time + 1000 < Date.now() ) requestLock.time = Date.now();
-                        while ( (Date.now() - requestLock.time) / requestLock.times < 300 ) {}
+                        if (requestLock.time + 1000 < Date.now()) requestLock.time = Date.now();
+                        while ((Date.now() - requestLock.time) / requestLock.times < 300) { }
                         window.$.ajax({
                             url: `/WebApi/Comment/GetPage`, method: 'post', data: {
                                 forType: message.forType,
@@ -1611,12 +1617,15 @@
                     })
                 })
             });
-            return results;
+            return {
+                results: results.length > 75 ? results.slice(0, 75) : results,
+                split: results.length > 75
+            };
         };
 
         // 当搜索框内容改变时，进行搜索并显示搜索结果
         searchInput.addEventListener('input', (e) => {
-            let results = search(e.target.value);
+            let { results, split } = search(e.target.value);
             searchResults.innerHTML = '';
             if (e.target.value == '') {
                 // 没有输入内容时，显示随机提示
@@ -1629,7 +1638,7 @@
             } else if (results.length > 0) {
                 results.forEach((item, index) => {
                     searchResults.innerHTML += `
-                        <a class="result" href="${encodeURI(item.href).replace('javascript:', 'scratch:')}">
+                        <a class="result" href="${encodeURI(item.href).replace('javascript:', 'scratch:')}" target="_blank">
                             ${item.image ?
                             `<img class="image" src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}">` : // 敲黑板，这里如果直接字符串拼接的话，如果这个图片的值为这样的：xxx" onerror="alert(1)，那就会执行 onerror，造成安全性问题
                             `<i class="icon ${TypeToIcon(encodeHTML(item.type))}"></i>`
@@ -1640,7 +1649,14 @@
                             </div>
                         </div>
                     `;
-                })
+                });
+                if (split) {
+                    searchResults.innerHTML += `
+                        <div class="no-result">
+                            搜索结果最多显示 75 条，若需要查看全部的记录，请前往：<a href="/AboutLocalSearch">关于搜索</a>
+                        </div>
+                    `;
+                }
             } else {
                 // 没有搜索结果:
                 searchResults.innerHTML = `
