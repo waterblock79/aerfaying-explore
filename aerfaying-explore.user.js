@@ -1677,7 +1677,7 @@
 
         // 呼出搜索框！！！
         addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key == 'p') { // 开启
+            if ((e.ctrlKey || e.metaKey) && e.key == 'p') { // 开启
                 searchElement.style.display = 'block';
                 searchInput.focus();
                 searchInput.value = '';
