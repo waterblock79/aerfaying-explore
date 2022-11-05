@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.9.1
+// @version      1.9.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.9.1';
+    const version = '1.9.2';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -861,7 +861,7 @@
     addFindElement('textarea.form-control', (element) => autoHeight(element));
     // 发送消息后自动复位
     addFindElement('textarea.form-control', (element) => {
-        element.parentElement.parentElement.parentElement.querySelector('.btn.btn-submit.btn-sm').addEventListener('click', () => {
+        element.parentElement.parentElement.parentElement.querySelector('.btn.btn-submit.btn-sm')?.addEventListener('click', () => {
             element.style.height = '75px';
         })
     });
@@ -1225,7 +1225,7 @@
             element.appendChild(previewElement);
 
             // 发送消息后自动复位
-            element.parentElement.querySelector('.btn.btn-submit.btn-sm').addEventListener('click', () => {
+            element.parentElement.querySelector('.btn.btn-submit.btn-sm')?.addEventListener('click', () => {
                 previewButtonGroup.edit.click();
             })
         })
@@ -1676,26 +1676,18 @@
         })
 
         // 呼出搜索框！！！
-        let ctrl = false, space = false;
         addEventListener('keydown', (e) => {
-            // 呼出
-            if (e.key == 'Control') ctrl = true;
-            if (e.key == ' ') space = true;
-            if (ctrl && space) { // 开启
+            if (e.ctrlKey && e.key == 'p') { // 开启
                 searchElement.style.display = 'block';
                 searchInput.focus();
                 searchInput.value = '';
                 searchInput.dispatchEvent(new Event('input')); // 触发输入事件以更新搜索结果
+                e.preventDefault();
             }
             // Esc 关闭
             if (e.key == 'Escape') {
                 searchElement.style.display = 'none';
             }
-        });
-
-        addEventListener('keyup', (e) => {
-            if (e.key == 'Control') ctrl = false;
-            if (e.key == ' ') space = false;
         });
 
         // 关闭搜索框。。。
@@ -1714,7 +1706,7 @@
             element.innerHTML = `
                 <h2 style="font-weight: 500">本地搜索</h2>
                 <p style="font-size: .9em">
-                    本地搜索功能可以在您访问页面时自动索引该页面，您可以通过快捷键<b> Ctrl + Space </b>来呼出快捷搜索栏并搜索已索引内容。全部索引数据将只会存储在本地，不会上传至任何服务器。
+                    本地搜索功能可以在您访问页面时自动索引该页面，您可以通过快捷键<b> Ctrl + K </b>来呼出快捷搜索栏并搜索已索引内容。全部索引数据将只会存储在本地，不会上传至任何服务器。
                 </p>
                 <p>
                     共存储 ${db.length} 条数据，占用 ${(JSON.stringify(db).length / 1024).toFixed(2)} KB 存储空间。
@@ -1777,6 +1769,17 @@
                 }
             });
         }
-    })
+    });
+
+    // 在评论输入框显示这个评论是回复给谁的
+    addFindElement('.reply-box_replyBox_3Fg5C', (element) => {
+        const getParent = (target, level) => {
+            if (level == 0) return target;
+            return getParent(target.parentNode, level - 1);
+        };
+        const username = getParent(element, 5).querySelector('.comment_base_info > a')?.innerText;
+        if (!username || getParent(element, 5).classList.contains('panel2_panel_1hPqt')) return;
+        element.querySelector('textarea').placeholder = `回复 @${username}`;
+    });
     // Your code here...
 })();

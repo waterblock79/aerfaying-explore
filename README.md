@@ -84,7 +84,7 @@
 16. 在消息页面预览回复的内容
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/消息页面预览回复内容.png" style="width: 20em"/>
-17. 使用快捷键 Ctrl + Space 快捷搜索内容
+17. 使用快捷键 Ctrl + K 快捷搜索内容
 
 	 <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/本地搜索.png" style="width: 20em"/>
 
