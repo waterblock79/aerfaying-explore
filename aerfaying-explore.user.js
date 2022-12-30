@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.9.2
+// @version      1.10.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.9.2';
+    const version = '1.10.0';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -229,7 +229,6 @@
         text: '在评论时添加贴吧表情',
         type: 'check',
         default: false,
-        desp: '实验性功能，仍在完善中'
     }, {
         tag: 'explore:fullscreenDisableScroll',
         text: '作品全屏时禁用鼠标滚轮滚动',
@@ -952,8 +951,12 @@
                     // 关闭并 focus 到输入框
                     emojiSelector.style.display = 'none';
                     textarea.focus();
-                    // 通过修改 value 的方式更改的输入框内容不会自动更新到 this.state.content 中，因此需要用户手动输入一个字符
-                    Blockey.Utils.Alerter.info('请至少再手动任意输入一个字符以更新输入框内容');
+                    // 触发 onChange 事件
+                    let evt = new Event('change');
+                    textarea.dispatchEvent(evt);
+                    let eventHandlerKey = Object.keys(textarea).find((item) => item.includes('_reactEventHandlers'));
+                    let eventHandler = textarea[eventHandlerKey];
+                    eventHandler.onChange(evt);
                 })
                 // 创建一个“如果鼠标摁下但是摁的不是自己就关闭自己”的事件
                 addEventListener('click', (e) => {
@@ -983,7 +986,7 @@
             flex-wrap: wrap;
             z-index: 1999;
             background: white;
-            box-shadow: 1px 1px 5px rgb(0 0 0 / 20%);
+            box-shadow: 0px 0px 10px rgb(0 0 0 / 25%);
             border-radius: 4px;
             padding: 0.5em;
             margin-right: 4em;
@@ -995,6 +998,7 @@
         .explore-emoji-selector > img {
             margin: 0.3em !important;
             width: 2em;
+            cursor: pointer;
         }
         .comment_comment_P_hgY .comment_info_2Sjc0 {
             overflow: inherit;
@@ -1692,7 +1696,7 @@
 
         // 关闭搜索框。。。
         searchElement.addEventListener('click', (e) => {
-            if (e.path[0] == searchElement) searchElement.style.display = 'none';
+            if (e.path[0].classList.contains('explore-quick-search') || e.path[0].classList.contains('explore-quick-search-background')) searchElement.style.display = 'none';
         });
     }
     addFindElement('.layout_content_20yil.layout_margin_3C6Zp > .container > div', (element) => {
