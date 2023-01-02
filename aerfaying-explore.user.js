@@ -652,6 +652,7 @@
 
         // 在关注、粉丝、下面添加一个“显示邀请的用户”的入口
         let showInvitedUsers = addFindElement('div.grid-2fr1.grid-gap-xl', (element) => {
+            if ($('#showInvitedUsers').length > 0) return; // 如果已经添加过了就退出掉（防止重复添加
             // 生成查看该用户邀请过的用户的链接
             let targetUrl = location.pathname;
             if (targetUrl.slice(-1) == '/') targetUrl = targetUrl.slice(0, -1);
@@ -661,6 +662,7 @@
             // 生成“邀请”栏的元素
             let newElement = document.createElement('div');
             newElement.className = 'panel2_wrapper_3UZFE panel-border-bottom';
+            newElement.id = 'showInvitedUsers';
             newElement.innerHTML = `
                 <div class="panel2_panel_1hPqt">
                     <div class="panel2_panelHead_1Bn6y panel-head">
@@ -1785,5 +1787,29 @@
         if (!username || getParent(element, 5).classList.contains('panel2_panel_1hPqt')) return;
         element.querySelector('textarea').placeholder = `回复 @${username}`;
     });
+
+    // 支持复制主页简介 Markdown
+    addFindElement('.panel2_panelHead_1Bn6y.panel-head', (element) => {
+        if (Blockey.Utils.getContext().targetType == 'User' && element.innerText == '个人简介') {
+            let btn = document.createElement('a');
+            btn.innerText = '查看 Markdown';
+            btn.onclick = () => {
+                let markdown = Blockey.Utils.getContext().target.abstract;
+                Blockey.Utils.confirm('简介 Markdown', `
+                    <pre>${Blockey.Utils.encodeHtml(markdown)}</pre>
+                    <button class="btn btn-primary" style="
+                        margin-bottom: 1em;
+                    " id="copyAbstractMarkdown">复制 Markdown</button>
+                `);
+                addFindElement('#copyAbstractMarkdown', (element) => {
+                    element.onclick = () => {
+                        navigator.clipboard.writeText(markdown);
+                        Blockey.Utils.Alerter.info('已复制到剪贴板');
+                    }
+                });
+            };
+            element.appendChild(btn);
+        }
+    })
     // Your code here...
 })();
