@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.10.1
+// @version      1.10.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.10.1';
+    const version = '1.10.2';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -1361,6 +1361,14 @@
         // 读取搜索数据
         let searchDb = JSON.parse(localStorage['explore:searchDb'] || '[]');
 
+        // 移除存储数据中的重复项（原先链接后带斜杠、不带斜杠会被当成两个记录）
+        searchDb = searchDb.filter((item, index) => {
+            let brother;
+            if (item.href.endsWith('/')) brother = item.href.slice(0, -1);
+            else brother = item.href + '/';
+            return !searchDb.find(item => item.href == brother);
+        });
+
         // 记录所访问页面的信息，用于快捷搜索
         let interval;
         addHrefChangeEvent((href) => {
@@ -1435,10 +1443,12 @@
                 return null;
             };
 
+            let removeLastXiegang = (str) => str[str.length - 1] == '/' ? str.slice(0, str.length - 1) : str;
+
             // 记录页面信息
             let RecordPageInfo = (href) => {
                 if (GetTypeFromURL(href) != null) {
-                    if (searchDb.filter((item) => item.href.toLowerCase() == href.toLowerCase()).length == 0) { // 记录不存在
+                    if (searchDb.filter((item) => removeLastXiegang(item.href.toLowerCase()) == removeLastXiegang(href.toLowerCase())).length == 0) { // 记录不存在
                         searchDb.push({
                             href: location.href.split(location.origin)[1].split('#')[0],
                             type: GetTypeFromURL(href),
@@ -1449,7 +1459,7 @@
                         localStorage['explore:searchDb'] = JSON.stringify(searchDb);
                     } else {
                         // 更新记录
-                        let record = searchDb.filter((item) => item.href.toLowerCase() == href.toLowerCase())[0];
+                        let record = searchDb.filter((item) => removeLastXiegang(item.href.toLowerCase()) == removeLastXiegang(href.toLowerCase()))[0];
                         record.type = GetTypeFromURL(href);
                         record.title = GetTitle(GetTargetFromBlockey(), GetTypeFromBlockey());
                         record.keywords = GetKeywords(GetTargetFromBlockey(), GetTypeFromBlockey());
@@ -1630,7 +1640,10 @@
         };
 
         // 当搜索框内容改变时，进行搜索并显示搜索结果
+        let lastInput = 0;
         searchInput.addEventListener('input', (e) => {
+            if ( Date.now() - lastInput < 200 ) return;
+            lastInput = Date.now();
             let { results, split } = search(e.target.value);
             searchResults.innerHTML = '';
             if (e.target.value == '') {
@@ -1810,6 +1823,13 @@
             };
             element.appendChild(btn);
         }
-    })
+    });
+
+    // 查看用户等级信息
+    addFindElement(`.profile-head_user_ktYc1 .user-flag-level_level_1N07n.user-flag-level_level-1_zBVua`, (element) => {
+        let target = Blockey.Utils.getContext().target;
+        window.$(element).tooltip({});
+        element.setAttribute('data-tip', `共 ${target.expPoints} 经验，当前等级经验：${target.expPointsCurLevel} / ${target.expPointsNextLevel}`)
+    });
     // Your code here...
 })();
