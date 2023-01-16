@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.10.2
+// @version      1.10.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,7 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.10.2';
+    const version = '1.10.3';
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -1642,56 +1642,49 @@
         // 当搜索框内容改变时，进行搜索并显示搜索结果
         let lastInput = 0;
         searchInput.addEventListener('input', (e) => {
-            if ( Date.now() - lastInput < 200 ) return;
-            lastInput = Date.now();
-            let { results, split } = search(e.target.value);
-            searchResults.innerHTML = '';
-            if (e.target.value == '') {
-                // 没有输入内容时，显示随机提示
-                searchResults.innerHTML = `
+            setTimeout(() => {
+                lastInput = Date.now();
+                let { results, split } = search(e.target.value);
+                searchResults.innerHTML = '';
+                if (e.target.value == '') {
+                    // 没有输入内容时，显示随机提示
+                    searchResults.innerHTML = `
                     <div class="no-result">
                         ${encodeHTML(GetRandomSearchTips())}
                     </div>
                 `;
-                return;
-            } else if (results.length > 0) {
-                results.forEach((item, index) => {
-                    searchResults.innerHTML += `
+                    return;
+                } else if (results.length > 0) {
+                    results.forEach((item, index) => {
+                        searchResults.innerHTML += `
                         <a class="result" href="${encodeURI(item.href).replace('javascript:', 'scratch:')}" target="_blank">
                             ${item.image ?
-                            `<img class="image" src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}">` : // 敲黑板，这里如果直接字符串拼接的话，如果这个图片的值为这样的：xxx" onerror="alert(1)，那就会执行 onerror，造成安全性问题
-                            `<i class="icon ${TypeToIcon(encodeHTML(item.type))}"></i>`
-                        }
+                                `<img class="image" src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}">` : // 敲黑板，这里如果直接字符串拼接的话，如果这个图片的值为这样的：xxx" onerror="alert(1)，那就会执行 onerror，造成安全性问题
+                                `<i class="icon ${TypeToIcon(encodeHTML(item.type))}"></i>`
+                            }
                             <div class="item">
                                 <div class="title">${encodeHTML(item.title)}</div>
                                 <div class="link">${encodeHTML(item.href)}</div>
                             </div>
                         </div>
                     `;
-                });
-                if (split) {
-                    searchResults.innerHTML += `
+                    });
+                    if (split) {
+                        searchResults.innerHTML += `
                         <div class="no-result">
                             搜索结果最多显示 75 条，若需要查看全部的记录，请前往：<a href="/AboutLocalSearch">关于搜索</a>
                         </div>
                     `;
-                }
-            } else {
-                // 没有搜索结果:
-                searchResults.innerHTML = `
+                    }
+                } else {
+                    // 没有搜索结果:
+                    searchResults.innerHTML = `
                     <div class="no-result">
                         找不到与关键词匹配的内容
                     </div>
                 `;
-            }
-            /*searchResults.innerHTML += `
-                <a class="result">
-                    <div class="item" style="font-size: 0.8em">
-                        <div class="title">全域搜索此内容 ></div>
-                    </div>
-                </a>
-            `;*/
-            // 本来是要加全域搜索（一键自动搜索帖子、用户、作品）的，但是发现要 ts，公开代码里这么弄不合适，就砍掉了
+                }
+            }, Date.now() - lastInput > 200 ? 0 : 200 - (Date.now() - lastInput))
         })
 
         // 呼出搜索框！！！
