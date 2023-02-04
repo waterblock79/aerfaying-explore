@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.10.3
+// @version      1.11.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -25,7 +25,9 @@
     'use strict';
     // 初始化信息
     var window = unsafeWindow || window;
-    const version = '1.10.3';
+    const version = '1.11.0';
+
+    if (location.search === '?NoUserscript') return;
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -196,7 +198,7 @@
         type: 'radio',
         default: 1,
         desp: `
-            <a target="_blank" href="/AboutLoading">详见这里</a>
+            <a target="_blank" href="/AboutLoading">如何选择？</a>
         `
     }, {
         tag: 'explore:https',
@@ -251,6 +253,12 @@
         type: 'check',
         default: true,
         desp: `存储 ${localStorage['explore:searchDb'] ? JSON.parse(localStorage['explore:searchDb']).length : 0} 条数据，共 ${localStorage['explore:searchDb'] ? (localStorage['explore:searchDb'].length / 1024).toFixed(2) : 0} KB，<a href="/AboutLocalSearch" target="_blank">详细</a>`
+    }, {
+        tag: 'explore:betterPriseAndBlame',
+        text: '优化评论赞踩显示机制',
+        type: 'check',
+        default: false,
+        desp: `在评论下方只显示点赞数减去点踩数的值，并且这个值小于等于 0 时不显示，类似 B 站评论，可以对“点踩侠”眼不见心不烦`
     }
     ];
     // 设置默认值
@@ -629,6 +637,7 @@
     // 在用户主页显示被邀请的信息、显示邀请的用户的入口
     addHrefChangeEvent((url) => {
         if (url.match(/\/Users\/([0-9]+\/?)/g) != location.pathname) return; // 如果这个页面不是个用户的主页就退出掉（不匹配 /Users/NUMBER/ 或 /Users/NUMBER）
+        if ($('.profile-head_join_HPHzg')[0]?.innerText?.includes('邀请')) return;
         let userId = url.match(/[0-9]+/); // 从 URL 匹配用户 ID
         window.$.ajax({
             method: 'POST',
@@ -949,7 +958,7 @@
                 emoji.addEventListener('click', (e) => {
                     let textarea = e.target.parentNode.parentNode.parentNode.parentNode.querySelector('textarea');
                     // value +=
-                    textarea.value += `![贴吧表情](${e.target.src})`;
+                    textarea.value = textarea.value.slice(0, textarea.selectionStart) + `![贴吧表情](${e.target.src})` + textarea.value.slice(textarea.selectionStart);
                     // 关闭并 focus 到输入框
                     emojiSelector.style.display = 'none';
                     textarea.focus();
@@ -1824,5 +1833,83 @@
         window.$(element).tooltip({});
         element.setAttribute('data-tip', `共 ${target.expPoints} 经验，当前等级经验：${target.expPointsCurLevel} / ${target.expPointsNextLevel}`)
     });
+
+    // 优化评论赞踩显示机制
+    if (localStorage['explore:betterPriseAndBlame'] == 'true') {
+        addFindElement('.comment_handle-group_1XxIF', (element) => {
+            // 原始赞踩元素
+            const praiseElement = element.querySelector('.comment_praise_3CkqM'),
+                blameElement = element.querySelector('.comment_blame_1WADJ');
+            // 插件的点赞、点踩和计数器元素
+            const praiseBtn = document.createElement('i'),
+                blameBtn = document.createElement('i'),
+                sumElement = document.createElement('span');
+            // 获取原始赞踩数
+            const praiseSum = () => Number(praiseElement.innerText),
+                blameSum = () => Number(blameElement.innerText);
+            // 更新赞踩状态
+            const updateStat = (praise, blame) => {
+                praiseBtn.className = `praise ${praise && 'color-primary'}`;
+                blameBtn.className = `blame ${blame && 'color-primary'}`;
+            };
+            // 更新赞踩计数
+            // 如果 waitUntilUpdate 为真，则会先等待一小会，直到原始数据更新，然后再更新计数，不会立马更新
+            const updateSum = (waitUntilUpdate) => {
+                if (waitUntilUpdate) {
+                    let startTime = Date.now(),
+                        last = praiseSum() - blameSum();
+                    let waitUpdateInterval = setInterval(() => {
+                        if (Date.now() - startTime > 3000) clearInterval(waitUpdateInterval);
+                        if (praiseSum() - blameSum() != last) {
+                            updateSum();
+                            clearInterval(waitUpdateInterval);
+                        }
+                    })
+                } else {
+                    sumElement.innerText = (praiseSum() - blameSum() > 0) ? praiseSum() - blameSum() : '';
+                }
+            };
+            // 设置相关样式
+            sumElement.className = 'comment_praise_3CkqM';
+            // 隐藏原始元素
+            praiseElement.style.display = 'none';
+            blameElement.style.display = 'none';
+            // 初始化赞踩状态、计数器
+            praiseBtn.className = praiseElement.querySelector('i').className;
+            blameBtn.className = blameElement.querySelector('i').className;
+            updateSum();
+            // 点赞、点踩事件
+            praiseBtn.addEventListener('click', () => {
+                praiseElement.click();
+                updateStat(true, false);
+                updateSum(true);
+            });
+            blameBtn.addEventListener('click', () => {
+                blameElement.click();
+                updateStat(false, true);
+                updateSum(true);
+            });
+            // 放进容器里，然后插入进页面
+            const container = document.createElement('span');
+            container.append(praiseBtn);
+            container.append(sumElement);
+            container.append(blameBtn);
+            insertBefore(container, element.querySelector('.comment_reply_1AC1U'))
+        })
+        addStyle(`
+            .comment_handle-group_1XxIF>span {
+                margin-right: 0.5em !important;
+                margin-left: 0 !important;
+            }
+            .comment_praise_3CkqM {
+                margin-left: 0.2em;
+                margin-right: 1em;
+            }
+        `)
+    }
+
+    //   本来这里是要写一个用 NotificationAPI 来推送 A 营消息的功能的，但是不能使用带加密的 API（只能开个iframe读内容），
+    // 而且获取消息的时候还会把小红点消掉（如果要全面接管小红点那太麻烦了），太麻烦了，而且后续维护的时候可能问题还会非常多，
+    // 有点捡了芝麻丢了西瓜的感觉...
     // Your code here...
 })();
