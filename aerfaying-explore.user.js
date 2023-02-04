@@ -1,15 +1,13 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.11.0
+// @version      1.11.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
 // @match        https://gitblock.cn/*
 // @match        http://aerfaying.com/*
 // @match        https://aerfaying.com/*
-// @match        http://3eworld.cn/*
-// @match        https://3eworld.cn/*
 // @icon         https://gitblock.cn/Content/logo.ico
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -24,8 +22,17 @@
 (function () {
     'use strict';
     // 初始化信息
-    var window = unsafeWindow || window;
-    const version = '1.11.0';
+    try {
+        var window = unsafeWindow || window;
+    } catch (e) { }
+    if (!window) {
+        try {
+            var window = self;
+        } catch (e) {
+            alert('似乎无法在您的浏览器上运行此脚本。')
+        }
+    }
+    const version = '1.11.1';
 
     if (location.search === '?NoUserscript') return;
 

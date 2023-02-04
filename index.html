@@ -192,7 +192,7 @@
                             target="_blank">Tampermonkey</a>。</p>
                 </div>
                 <div v-if="installStep == 0 && installSubStep == 2">
-                    <p>Safari 用户请前往 App Store 下载应用「<a href="https://apps.apple.com/cn/app/userscripts/id1463298887"
+                    <p>Safari 用户推荐前往 App Store 下载应用「<a href="https://apps.apple.com/cn/app/userscripts/id1463298887"
                             target="_blank">Userscripts</a>」。<br />（如果您正在使用 MacOS 上的第三方浏览器，请参考对应浏览器的安装教程）</p>
                 </div>
                 <div v-if="installStep == 0 && installSubStep == 3">
@@ -211,18 +211,12 @@
                 <div v-if="installStep == 1 && installSubStep == 1">
                     <p style="line-height: 1.6em;">
                         <b>对于 iOS 用户：</b><br />
-                        <b>1.</b> 打开 设置 - Safari 浏览器 - 扩展 - Userscripts - 开启<br />
-                        <b>2.</b> 打开 Userscripts 应用，点击 Set Userscripts Directory 摁钮，选择一个方便找到的文件夹。<br />
-                        <b>3.A.</b> 在电脑上打开<a
-                            href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js"
-                            target="_blank">该链接</a>（<a
-                            href="https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js"
-                            target="_blank">备用地址</a>）并 Ctrl+S 保存该文件，通过 QQ 等方式传输到手机上，然后将这个文件转存在你刚刚选择的文件夹中即可。<br />
-                        <b>3.B.</b> 如果无法使用电脑，请下载<a
-                            href="https://hub.fastgit.org/waterblock79/aerfaying-explore/archive/refs/heads/main.zip"
-                            target="_blank">该压缩包</a>，解压压缩包并将其中的 aerfaying-explore.user.js 文件转存在你刚刚选择的文件夹中。<br />
-                        <b>4.</b> 打开 Safari，点击地址栏右侧拼图图标，点击 Userscripts，出现访问的权限请求时点击 始终允许。<br />
-                        <b>5.</b> 弹出 Safari 中的 Userscripts 插件设置框则代表配置成功，现在即可使用脚本了！<br /><br />
+                        <b>1.</b> 打开 设置 - Safari 浏览器 - 扩展 - Userscripts，打开扩展<br />
+                        <b>2.</b> 打开 Userscripts 应用，点击“Set Userscripts Directory”摁钮，选择一个方便找到的文件夹。<br />
+                        <b>3.</b> 打开 
+                        <b><a href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js"target="_blank">该链接</a></b>
+                        ，点击地址栏右侧拼图图标，点击 Userscripts，出现访问的权限请求时点击 始终允许，然后在弹出的 Userscript 下拉框中点击 Tap to install，翻到底下，点击 Install。<br />
+                        <b>4.</b> 打开 A 营，用和上面相同的方式允许 Userscripts 访问 A 营，点击地址栏拼图图标 → 点击 Userscripts → 点击始终允许，然后刷新页面即可！<br /><br />
                         <b>对于 MacOS 用户：</b><br />
                         我没 Mac 设备，请参考<a href="https://github.com/quoid/userscripts#usage" target="_blank">英文文档</a>吧（
                     </p>

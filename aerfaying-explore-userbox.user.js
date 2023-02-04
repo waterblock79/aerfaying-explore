@@ -8,8 +8,6 @@
 // @match        https://gitblock.cn/*
 // @match        http://aerfaying.com/*
 // @match        https://aerfaying.com/*
-// @match        http://3eworld.cn/*
-// @match        https://3eworld.cn/*
 // @icon         https://gitblock.cn/Content/logo.ico
 // @grant        none
 // @license      MIT
