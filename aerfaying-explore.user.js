@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.11.1
+// @version      1.11.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.11.1';
+    const version = '1.11.2';
 
     if (location.search === '?NoUserscript') return;
 
@@ -1720,7 +1720,7 @@
 
         // 关闭搜索框。。。
         searchElement.addEventListener('click', (e) => {
-            if (e.path[0].classList.contains('explore-quick-search') || e.path[0].classList.contains('explore-quick-search-background')) searchElement.style.display = 'none';
+            if (e.target.classList.contains('explore-quick-search') || e.target.classList.contains('explore-quick-search-background')) searchElement.style.display = 'none';
         });
     }
     addFindElement('.layout_content_20yil.layout_margin_3C6Zp > .container > div', (element) => {
@@ -1918,5 +1918,25 @@
     //   本来这里是要写一个用 NotificationAPI 来推送 A 营消息的功能的，但是不能使用带加密的 API（只能开个iframe读内容），
     // 而且获取消息的时候还会把小红点消掉（如果要全面接管小红点那太麻烦了），太麻烦了，而且后续维护的时候可能问题还会非常多，
     // 有点捡了芝麻丢了西瓜的感觉...
+
+    // 修复过长且不能自动换行的选票评价会导致否决键被顶到屏幕外面的问题
+    addStyle(`
+        .responsive-table_wrapper_101dU td {
+            word-break: break-word;
+        }
+    `)
+    addFindElement(`.responsive-table_wrapper_101dU td`, (element) => {
+        if (element.innerText.length > 256) {
+            let origin = element.innerText;
+            element.innerText = Blockey.Utils.encodeHtml(origin.substr(0, 256)) + '...';
+            element.addEventListener('click', () => {
+                Blockey.Utils.confirm(`查看完整选票评价`, `
+                    <div style="word-break: break-word; margin-bottom: 1em">
+                        ${Blockey.Utils.encodeHtml(origin)}
+                    </div>
+                `);
+            });
+        }
+    })
     // Your code here...
 })();
