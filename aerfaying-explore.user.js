@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.11.2
+// @version      1.11.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.11.2';
+    const version = '1.11.3';
 
     if (location.search === '?NoUserscript') return;
 
@@ -894,6 +894,8 @@
             if (location.pathname.search(/Studios\/[0-9]+\/Forum\/PostView/) == 1) { // 论坛帖子的网页标题都是“论坛 - 稽木世界”，这里给它加上帖子标题
                 title = $('.title')[0].innerText + ' - ' + title
             }
+            title = title.replace(' - 阿儿法营', '');
+            title = title.replace(' - 稽木世界', '')
             navigator.clipboard.writeText(`[${title}](${link})`);
             window.Blockey.Utils.Alerter.info('已复制到剪贴板');
         });
@@ -1231,7 +1233,7 @@
                 previewButtonGroup.preview.classList.add('active');
                 element.querySelector('textarea').style.display = 'none';
                 element.querySelector('div.explore-comment-preview').style.display = 'block';
-                element.querySelector('div.explore-comment-preview').innerHTML = window.Blockey.Utils.markdownToHtml(encodeHTML(element.querySelector('textarea').value));
+                element.querySelector('div.explore-comment-preview').innerHTML = window.Blockey.Utils.markdownToHtml(element.querySelector('textarea').value);
             });
             // 把子摁钮加入摁钮组
             previewButtonGroup.parent.appendChild(previewButtonGroup.edit);
@@ -1374,465 +1376,267 @@
 
     // 快捷搜索
     if (localStorage['explore:localSearch'] == 'true') {
-        // 读取搜索数据
-        let searchDb = JSON.parse(localStorage['explore:searchDb'] || '[]');
-
-        // 移除存储数据中的重复项（原先链接后带斜杠、不带斜杠会被当成两个记录）
-        searchDb = searchDb.filter((item, index) => {
-            let brother;
-            if (item.href.endsWith('/')) brother = item.href.slice(0, -1);
-            else brother = item.href + '/';
-            return !searchDb.find(item => item.href == brother);
-        });
-
-        // 记录所访问页面的信息，用于快捷搜索
-        let interval;
-        addHrefChangeEvent((href) => {
-            // a. 转 https://gitblock.cn/Users/1 这样的链接为 /Users/1
-            // b. 去除链接中 # 后内容
-            // c. 转小写
-            href = location.href.split(location.origin)[1].split('#')[0].toLowerCase();
-
-            // 字符串完全匹配该正则表达式？
-            let FullyMatched = (reg, str) => {
-                return str.match(reg) && str.match(reg)[0] == str;
-            };
-            // 从 URL 匹配类型
-            let GetTypeFromURL = (url) => {
-                let regs = {
-                    'Studio': /\/studios\/[0-9]*\/?/,
-                    'User': /\/users\/[0-9]*\/?/,
-                    'Project': /\/projects\/[0-9]*\/?/,
-                    'ForumPost': /\/studios\/[0-9]*\/forum\/postview\?postid=[0-9]*/
+        /**
+         * @returns {Promise<IDBDatabase>}
+         */
+        const openDb = () => {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open('explore-quick-search');
+                req.onsuccess = () => {
+                    resolve(req.result);
                 };
-                for (let type in regs) {
-                    if (FullyMatched(regs[type], url.toLowerCase())) return type;
-                }
-                return null;
-            }
-            // 从 Blockey 匹配类型
-            let GetTypeFromBlockey = () => {
-                return window.Blockey.Utils.getContext().targetType;
-            };
-            // 从 Blockey 获取 target
-            let GetTargetFromBlockey = () => {
-                return window.Blockey.Utils.getContext().target;
-            };
-            // 获取记录 Title
-            let GetTitle = (target, type) => {
-                if (type == 'Studio') return target.name;
-                if (type == 'User') return target.username;
-                if (type == 'Project') return target.title;
-                if (type == 'ForumPost') return target.title;
-                return null;
-            };
-            // 获取 Keywords
-            let GetKeywords = (target, type) => {
-                let keywords = [];
-                if (type == 'Studio') {
-                    keywords.push(target.name);
-                    keywords.push(target.id);
-                    keywords.push(target.creator.username);
-                } else if (type == 'User') {
-                    keywords.push(target.username);
-                    keywords.push(target.id);
-                    if (localStorage['explore:remark'] && JSON.parse(localStorage['explore:remark'])[target.id]) {
-                        keywords.push(JSON.parse(localStorage['explore:remark'])[target.id]);
-                    }
-                } else if (type == 'Project') {
-                    keywords.push(target.title);
-                    keywords.push(target.id);
-                    keywords.push(target.creator.username);
-                } else if (type == 'ForumPost') {
-                    keywords.push(target.title);
-                    keywords.push(target.id);
-                } else {
-                    return [];
-                }
-                return keywords;
-            };
-            // 获取 Image
-            let GetImage = (target, type) => {
-                if (type == 'Studio') return target.thumbId;
-                if (type == 'User') return target.thumbId;
-                if (type == 'Project') return target.thumbId;
-                return null;
-            };
-
-            let removeLastXiegang = (str) => str[str.length - 1] == '/' ? str.slice(0, str.length - 1) : str;
-
-            // 记录页面信息
-            let RecordPageInfo = (href) => {
-                if (GetTypeFromURL(href) != null) {
-                    if (searchDb.filter((item) => removeLastXiegang(item.href.toLowerCase()) == removeLastXiegang(href.toLowerCase())).length == 0) { // 记录不存在
-                        searchDb.push({
-                            href: location.href.split(location.origin)[1].split('#')[0],
-                            type: GetTypeFromURL(href),
-                            title: GetTitle(GetTargetFromBlockey(), GetTypeFromBlockey()),
-                            keywords: GetKeywords(GetTargetFromBlockey(), GetTypeFromBlockey()),
-                            image: GetImage(GetTargetFromBlockey(), GetTypeFromBlockey())
+                req.onupgradeneeded = () => {
+                    if (!req.result.objectStoreNames.contains('data')) {
+                        req.result.createObjectStore('data', {
+                            keyPath: 'url'
                         });
-                        localStorage['explore:searchDb'] = JSON.stringify(searchDb);
-                    } else {
-                        // 更新记录
-                        let record = searchDb.filter((item) => removeLastXiegang(item.href.toLowerCase()) == removeLastXiegang(href.toLowerCase()))[0];
-                        record.type = GetTypeFromURL(href);
-                        record.title = GetTitle(GetTargetFromBlockey(), GetTypeFromBlockey());
-                        record.keywords = GetKeywords(GetTargetFromBlockey(), GetTypeFromBlockey());
-                        record.image = GetImage(GetTargetFromBlockey(), GetTypeFromBlockey());
-                        localStorage['explore:searchDb'] = JSON.stringify(searchDb);
                     }
                 }
-            }
-
-            // 等待 Blockey 数据加载完毕然后调用记录函数
-            let waitInterval = setInterval(() => {
-                // 1. GetTargetFromBlockey()
-                //    值为 Null 说明 Blockey 数据还没加载完，得等加载完了再记录
-                // 2. GetTypeFromBlockey() == GetTypeFromURL(href)
-                //    这里的条件是从 URL 完全匹配得到的类型和从 Blockey 获取的类型一致，这么做原因有如下两条：
-                //       a. 防止如 /Users/*/My/InvitedUsers 这类地址混入记录中
-                //       b. ForumPost 最开始没加载完的时候 Blockey 会返回 Studio 类型，不等加载完再记录的话就会出岔子
-                if (GetTargetFromBlockey() && GetTypeFromBlockey() == GetTypeFromURL(href)) {
-                    clearInterval(waitInterval);
-                    RecordPageInfo(href);
-                }
-            }, 100);
-
-        });
-
-
-        // 随机搜索提示语
-        let GetRandomSearchTips = () => {
-            return [
-                '本地搜索的数据来源于您曾访问过的页面',
-                '本地搜索的数据不会上传到服务器，只会存储在您的计算机中',
-                '使用空格来分开多个搜索关键词',
-            ][Math.floor(Math.random() * 3)];
-        };
-        // 映射搜索结果类型到图标
-        let TypeToIcon = (type) => {
-            return {
-                'project': 'projects',
-                'user': 'member',
-                'studio': 'studio',
-            }[type] || 'mission';
+            })
         }
 
-        // 创建样式及元素
-        addStyle(`
-            .explore-quick-search-background {        
-                z-index: 10010;
-                display: flex;
-                left: 0;
-                top: 0;
-                background: rgb(0,0,0,0.25);
-                /* backdrop-filter: blur(2px); 太卡了*/
-                width: 100%;
-                height: 100%;
-                position: fixed;
-            }
+        // 转换老数据
+        if (localStorage['explore:searchDb']) {
+            try {
+                openDb().then((db) => {
+                    const transaction = db.transaction(['data'], 'readwrite')
+                        .objectStore('data');
+                    JSON.parse(localStorage['explore:searchDb']).forEach(item => {
+                        transaction.put({
+                            url: item.href,
+                            keywords: [
+                                item.keywords[0],
+                                item.keywords[1]
+                            ],
+                            name: item.title,
+                            type: item.type,
+                            image: item.image,
+                            lastVisit: 0
+                        })
+                    });
+                    localStorage.removeItem('explore:searchDb');
+                })
+            } catch (e) { }
+        }
 
-            .explore-quick-search { 
-                top: 10%;
-                left: 20%;
-                width: 60%;
-                height: 80%;
-                position: fixed;
-                z-index: 10086;
+        // 创建搜索结果HTMl的函数
+        const createSearchResultHTMLCode = (item) => `
+            <a class="result" href="${encodeURI(item.url)}">
+                ${item.image ?
+                `<img src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}" />` :
+                /*`<i class="mission lg" style="margin: 0 0.55em 0 0.25em; color: lightslategrey;"></i>`*/``
             }
+                <div style="overflow: hidden">
+                    <div style="font-size: 1.25em">${encodeHTML(item.name)}</div>
+                    <div style="font-size: 0.75em; opacity: 0.75">${encodeHTML(item.url)} - 最后访问：${item.lastVisit === 0 ? '很久以前' : Date.now() - item.lastVisit < 24 * 60 * 60 * 1000 ?
+                '' + (new Date(item.lastVisit)).toLocaleTimeString().split(':').splice(0, 2).join(':') :
+                Math.floor((Date.now() - item.lastVisit) / 24 / 60 / 60 / 1000) + ' 天前'
+            }</div>
+                </div>
+            </a>
+        `; // 土制 JSX
 
-            .explore-quick-search input {
-                box-shadow: 0px 0px 15px rgb(0 0 0 / 20%);
-                width: 100%;
-                outline: none;
-                border: none;
-                padding: .75em 1em;
-                font-size: 1.25em;
-                border-radius: 8px;
-                background: rgb(256,256,256,0.925);
-                backdrop-filter: blur(2px);
-            }
-
-            .explore-quick-search .results { 
-                box-shadow: 0px 0px 15px rgb(0 0 0 / 20%);
-                width: 100%;
-                padding: 0.5em 1.5em;
-                border-radius: 8px;
-                margin-top: 1.5em;
-                background: rgb(256,256,256,0.925);
-                backdrop-filter: blur(2px);
-                max-height: calc(100% - 2em);
-                overflow-y: auto;
-            }
-
-            .explore-quick-search .results .result {
-                display: flex;
-                align-items: center;
-                border-bottom: solid 1px rgb(0,0,0,0.075);
-                padding: 1em 0;
-                color: black;
-                text-decoration: none;
-            }
-            .no-result {
-                margin: 1em 0;
-            }
-            .explore-quick-search .results .result:last-child {
-                border: none;
-            }
-
-            .explore-quick-search .results .result .icon {
-                font-size: 2.5em;
-                color: dimgrey;
-                padding: 0;
-            }
-
-            .explore-quick-search .results .result .image {
-                width: 2.5em;
-                padding: 0;
-            }
-
-            .explore-quick-search .results .result .item {
-                cursor: pointer;
-                margin-left: 1em;
-                width: 100%;
-            }
-            .explore-quick-search .results .result .item .title {
-                font-size: 1.5em;
-            }
-            .explore-quick-search .results .result .item .link {
-                font-size: 0.75em;
-                color: grey;
-            }
-        `);
-
-        let searchElement = document.createElement('div');
-        searchElement.style.display = 'none';
-        searchElement.classList.add('explore-quick-search-background');
-        searchElement.innerHTML = `
-            <div class="explore-quick-search">
-                <input type="text" placeholder="进行本地搜索">
-                <div class="results">
-                    <div class="no-result"> ${encodeHTML(GetRandomSearchTips())} </div>
+        // 创建元素
+        const searchRootElement = document.createElement('div');
+        searchRootElement.className = 'explore-quick-search';
+        searchRootElement.innerHTML = `
+            <input
+                placeholder="搜点什么"
+            />
+            <div class="results">
+                <div class="result-container">
+                    <div class="result-message">输入一个关键词以开始搜索</div>
                 </div>
             </div>
         `;
-        document.body.appendChild(searchElement);
-
-        // 搜索
-        // 获取相关元素
-        let searchInput = searchElement.querySelector('.explore-quick-search input');
-        let searchResults = searchElement.querySelector('.explore-quick-search .results');
-
-        // 搜索函数
-        let search = (keyword) => {
-            if (keyword == '') return []; // 关键词为空就不搜索了，直接 return 空列表
-            let results = [];
-            // 全部小写化，避免大小写搜不着问题
-            keyword = keyword.toLowerCase();
-            // 按空格分开关键词，并删除全部空关键词
-            let keywordList = keyword.split(' ');
-            keywordList = keywordList.filter((item) => item != '');
-            // 遍历搜索数据
-            // 遍历：关键词列表 => { 索引列表 => { 某索引的关键词列表 } }
-            keywordList.forEach((keyword) => {
-                searchDb.forEach((item, index) => {
-                    // 遍历每个搜索数据下的关键词
-                    item.keywords.forEach((key, index) => {
-                        // 如果发现搜索数据关键词、搜索关键词间存在包含关系，那就把这个结果加入到结果列表里
-                        if (!key) return; // 关键词为空就 return 跳过
-                        key = String(key).toLowerCase();
-                        if ((key.includes(keyword) || keyword.includes(key)) && !results.includes(item)) {
-                            results.push(item);
-                            return;
-                        }
-                    })
-                })
-            });
-            return {
-                results: results.length > 75 ? results.slice(0, 75) : results,
-                split: results.length > 75
-            };
-        };
-
-        // 当搜索框内容改变时，进行搜索并显示搜索结果
-        let lastInput = 0;
-        searchInput.addEventListener('input', (e) => {
-            setTimeout(() => {
-                lastInput = Date.now();
-                let { results, split } = search(e.target.value);
-                searchResults.innerHTML = '';
-                if (e.target.value == '') {
-                    // 没有输入内容时，显示随机提示
-                    searchResults.innerHTML = `
-                    <div class="no-result">
-                        ${encodeHTML(GetRandomSearchTips())}
-                    </div>
-                `;
-                    return;
-                } else if (results.length > 0) {
-                    results.forEach((item, index) => {
-                        searchResults.innerHTML += `
-                        <a class="result" href="${encodeURI(item.href).replace('javascript:', 'scratch:')}" target="_blank">
-                            ${item.image ?
-                                `<img class="image" src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}">` : // 敲黑板，这里如果直接字符串拼接的话，如果这个图片的值为这样的：xxx" onerror="alert(1)，那就会执行 onerror，造成安全性问题
-                                `<i class="icon ${TypeToIcon(encodeHTML(item.type))}"></i>`
-                            }
-                            <div class="item">
-                                <div class="title">${encodeHTML(item.title)}</div>
-                                <div class="link">${encodeHTML(item.href)}</div>
-                            </div>
-                        </div>
-                    `;
-                    });
-                    if (split) {
-                        searchResults.innerHTML += `
-                        <div class="no-result">
-                            搜索结果最多显示 75 条，若需要查看全部的记录，请前往：<a href="/AboutLocalSearch">关于搜索</a>
-                        </div>
-                    `;
-                    }
-                } else {
-                    // 没有搜索结果:
-                    searchResults.innerHTML = `
-                    <div class="no-result">
-                        找不到与关键词匹配的内容
-                    </div>
-                `;
-                }
-            }, Date.now() - lastInput > 200 ? 0 : 200 - (Date.now() - lastInput))
-        })
-
-        // 呼出搜索框！！！
-        addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key == 'k') { // 开启
-                searchElement.style.display = 'block';
-                searchInput.focus();
-                searchInput.value = '';
-                searchInput.dispatchEvent(new Event('input')); // 触发输入事件以更新搜索结果
-                e.preventDefault();
+        searchRootElement.style.display = 'none';
+        addStyle(`
+            .explore-quick-search {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                background: rgb(0, 0, 0, 0.35);
+                z-index: 10000;
             }
-            // Esc 关闭
-            if (e.key == 'Escape') {
-                searchElement.style.display = 'none';
+            .explore-quick-search > input {
+                border-radius: 8px;
+                outline: none;
+                border: none;
+                background: rgb(255,255,255,0.92);
+                backdrop-filter: blur(5px);
+                padding: 1em 1.25em;
+                font-size: 1.2em;
+                width: 75%;
             }
-        });
-
-        // 关闭搜索框。。。
-        searchElement.addEventListener('click', (e) => {
-            if (e.target.classList.contains('explore-quick-search') || e.target.classList.contains('explore-quick-search-background')) searchElement.style.display = 'none';
-        });
-    }
-    addFindElement('.layout_content_20yil.layout_margin_3C6Zp > .container > div', (element) => {
-        if (location.href.includes('AboutLocalSearch')) {
-            document.head.querySelector('title').innerText = '本地搜索'
-            // 修改样式
-            $('.layout_content_20yil.layout_margin_3C6Zp .container')[0].style.textAlign = 'center';
-            $('.layout_content_20yil.layout_margin_3C6Zp .container div')[0].style.margin = '2em 3em';
-            // 创建元素
-            let db = localStorage.getItem('explore:searchDb') ? JSON.parse(localStorage.getItem('explore:searchDb')) : [];
-            element.innerHTML = `
-                <h2 style="font-weight: 500">本地搜索</h2>
-                <p style="font-size: .9em">
-                    本地搜索功能可以在您访问页面时自动索引该页面，您可以通过快捷键<b> Ctrl + K </b>来呼出快捷搜索栏并搜索已索引内容。全部索引数据将只会存储在本地，不会上传至任何服务器。
-                </p>
-                <p>
-                    共存储 ${db.length} 条数据，占用 ${(JSON.stringify(db).length / 1024).toFixed(2)} KB 存储空间。
-                </p>
-                <p>
-                    <a id="export">导出</a> 
-                    <a id="import">导入</a> 
-                    <a id="delete">清空</a>
-                </p>
-                <div class="markdown_body_1wo0f">
-                    ${window.Blockey.Utils.markdownToHtml(
-                `|Type|Title|Href|Image|Keywords|  \n|----|-----|----|-----|----|  \n${encodeHTML(db.map(item => {
-                    return `| ${item.type} | ${item.title} | [${item.href}](${item.href}) | ${item.image ? `![](https://cdn.gitblock.cn/Media?name=${item.image}){.explore-search-datatable-image}` : null} | ${item.keywords.join(', ')} | `;
-                }).join('  \n'))
-                }`
-            )
-                }
-                </div>
-            `;
-            addStyle(`
-                .explore-search-datatable-image {
-                    width: 100px;
-                }
-            `);
-            // copliot 写的导出导入，比我原来想好的方案强
-            // 导出
-            element.querySelector('#export').addEventListener('click', () => {
-                let a = document.createElement('a');
-                a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(db, '', 4));
-                a.download = 'searchDb.json';
-                a.click();
-            });
-            // 导入
-            element.querySelector('#import').addEventListener('click', () => {
-                let input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json';
-                input.onchange = () => {
-                    let file = input.files[0];
-                    let reader = new FileReader();
-                    reader.readAsText(file);
-                    reader.onload = () => {
-                        try {
-                            let data = JSON.parse(reader.result);
-                            localStorage.setItem('explore:searchDb', JSON.stringify(data));
-                            alert('导入成功！');
-                            location.reload();
-                        } catch (e) {
-                            alert(e);
-                        }
-                    }
-                }
-                input.click();
-            });
-            // 清空
-            element.querySelector('#delete').addEventListener('click', () => {
-                if (confirm('确定要删除全部本地搜索索引数据吗？') == true) {
-                    localStorage.removeItem('explore:searchDb');
-                    location.reload();
-                }
-            });
-        }
-    });
-
-    // 在评论输入框显示这个评论是回复给谁的
-    addFindElement('.reply-box_replyBox_3Fg5C', (element) => {
-        const getParent = (target, level) => {
-            if (level == 0) return target;
-            return getParent(target.parentNode, level - 1);
-        };
-        const username = getParent(element, 5).querySelector('.comment_base_info > a')?.innerText;
-        if (!username || getParent(element, 5).classList.contains('panel2_panel_1hPqt')) return;
-        element.querySelector('textarea').placeholder = `回复 @${username}`;
-    });
-
-    // 支持复制主页简介 Markdown
-    addFindElement('.panel2_panelHead_1Bn6y.panel-head', (element) => {
-        if (Blockey.Utils.getContext().targetType == 'User' && element.innerText == '个人简介') {
-            let btn = document.createElement('a');
-            btn.innerText = '查看 Markdown';
-            btn.onclick = () => {
-                let markdown = Blockey.Utils.getContext().target.abstract;
-                Blockey.Utils.confirm('简介 Markdown', `
-                    <pre>${Blockey.Utils.encodeHtml(markdown)}</pre>
-                    <button class="btn btn-primary" style="
-                        margin-bottom: 1em;
-                    " id="copyAbstractMarkdown">复制 Markdown</button>
-                `);
-                addFindElement('#copyAbstractMarkdown', (element) => {
-                    element.onclick = () => {
-                        navigator.clipboard.writeText(markdown);
-                        Blockey.Utils.Alerter.info('已复制到剪贴板');
+            .explore-quick-search > .results {
+                margin-top: 1em;
+                overflow: hidden;
+                height: 60%;
+                width: 75%;
+                border-radius: 8px;
+                background: rgb(255,255,255,0.9);
+                backdrop-filter: blur(5px);
+            }
+            .explore-quick-search .result-container {
+                width: 100%;
+                height: 100%;
+                padding: 1em;
+                overflow-y: auto;
+                max-height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .explore-quick-search .result {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                text-decoration: none;
+                color: #24292f;
+                margin: 0.5em 0;
+                padding: 0.75em 1em;
+                margin-top: 0;
+                border-radius: 4px;
+                transition: background 0.1s;
+            }
+            .explore-quick-search .result:hover {
+                background: rgb(0,0,0,0.1);
+            }
+            .explore-quick-search .result > img {
+                width: 2.5em;
+                margin-right: 1em;
+            }
+            .explore-quick-search .result > div > .title {
+                font-size: 1.25em;
+            }
+            .explore-quick-search .result > div > .subtitle {
+                font-size: 0.75em;
+                opacity: 0.75;
+            }
+            .explore-quick-search .result-message {
+                display: flex;
+                justify-content: center;
+                height: 90%;
+                align-items: center;
+                padding: 0 2em;
+            }
+        `);
+        addHrefChangeEvent(() => {
+            const availableTargetType = ['Studio', 'User', 'Project', 'ForumPost'];
+            const availableUrlFormat = [
+                /\/studios\/[0-9]*\/?/i,
+                /\/users\/[0-9]*\/?/i,
+                /\/projects\/[0-9]*\/?/i,
+                /\/studios\/[0-9]*\/forum\/postview\?postid=[0-9]*/i
+            ];
+            const getTargetTypeFromUrl = (url) => {
+                let flag = false;
+                availableTargetType.forEach((item, index) => {
+                    if (url.match(availableUrlFormat[index]) && url.match(availableUrlFormat[index])[0] == url) {
+                        flag = item;
                     }
                 });
-            };
-            element.appendChild(btn);
-        }
-    });
+                return flag || null;
+            }
+            let waitInterval = setInterval(() => {
+                const url = location.href.replace(location.origin, '').replace(location.hash, '');
+                if (!getTargetTypeFromUrl(url)) {
+                    clearInterval(waitInterval);
+                    return;
+                }
+                if (getTargetTypeFromUrl(url) !== Blockey.Utils.getContext().targetType) {
+                    return;
+                }
+                clearInterval(waitInterval);
+                if (availableTargetType.includes(Blockey.Utils.getContext().targetType)) {
+                    const name = Blockey.Utils.getContext().target.name || Blockey.Utils.getContext().target.title || Blockey.Utils.getContext().target.username;
+                    openDb().then((db) => {
+                        const req = db.transaction(['data'], 'readwrite')
+                            .objectStore('data')
+                            .put({
+                                url: url,
+                                keywords: [
+                                    Blockey.Utils.getContext().target.id,
+                                    name,
+                                    Blockey.Utils.getContext()?.target?.creator?.username || Blockey.Utils.getContext()?.target?.creatorId
+                                ],
+                                name: name,
+                                type: Blockey.Utils.getContext().targetType,
+                                image: Blockey.Utils.getContext().target.thumbId || null,
+                                lastVisit: Date.now()
+                            });
+                    })
+                }
+            }, 100);
+        });
+        addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key == 'k') {
+                searchRootElement.style.display = '';
+                searchRootElement.querySelector('input').focus();
+                e.preventDefault();
+            }
+            if (e.key == 'escape') {
+                searchRootElement.style.display = 'none';
+                e.preventDefault();
+            }
+        });
+        document.body.append(searchRootElement);
+        searchRootElement.querySelector('input')?.addEventListener('input', (e) => {
+            const content = e.target.value;
+            const result = [];
+            if (content == '') {
+                const container = searchRootElement.querySelector('.explore-quick-search .result-container');
+                container.innerHTML = '<div class="result-message">输入一个关键词以开始搜索</div>';
+                return;
+            }
+            openDb().then(db => {
+                const req = db.transaction(['data'])
+                    .objectStore('data')
+                    .getAll();
+                req.onsuccess = () => {
+                    const container = searchRootElement.querySelector('.explore-quick-search .result-container');
+                    container.innerHTML = '';
+                    req.result.forEach(item => {
+                        let flag = false;
+                        item.keywords.forEach(keyword => {
+                            keyword = keyword?.toString()?.toLocaleLowerCase();
+                            if (keyword != '' && typeof keyword == 'string' && keyword.includes(content.toLocaleLowerCase()) || content.toLocaleLowerCase().includes(keyword)) {
+                                flag = true;
+                            }
+                        });
+                        if (flag) {
+                            result.push(item);
+                        }
+                    });
+                    if (result.length == 0) {
+                        container.innerHTML += '<div class="result-message">没有搜索到匹配的结果</div>'
+                    } else {
+                        result.sort((a, b) => b.lastVisit - a.lastVisit);
+                        result.slice(0, 75).forEach((item) => {
+                            container.innerHTML += createSearchResultHTMLCode(item);
+                        });
+                        if (result.length> 75) {
+                            container.innerHTML += `
+                            <div style="margin: 0.25em 0.75em;">
+                                最多显示 75 条搜索结果
+                            </div>`
+                        }
+                    }
+                };
+            })
+        });
+        searchRootElement.addEventListener('click', e => {
+            if (e.target.className === 'explore-quick-search') {
+                searchRootElement.style.display = 'none';
+            }
+        })
+    }
 
     // 查看用户等级信息
     addFindElement(`.profile-head_user_ktYc1 .user-flag-level_level_1N07n.user-flag-level_level-1_zBVua`, (element) => {
@@ -1937,6 +1741,64 @@
                 `);
             });
         }
+    })
+
+    // Markdown 沙盒
+    if (location.pathname == '/Sandbox') {
+        $('title')[0].innerHTML = `Markdown 沙盒 - Aerfaying Explore`;
+        $('.container')[1].innerHTML = `
+            <h4 style="margin: 0.5em 0.5em">
+                Markdown 沙盒
+                <p style="
+                    font-size: 0.75rem;
+                    line-height: 2em;
+                ">
+                    您可以在 Markdown 沙盒中使用 A 营的 Markdown 并实时预览。编辑会实时保存到本地存储中，请勿在这里输入隐私信息或者重要内容。
+                </p>
+            </h4>
+            <div class="sandbox-container">
+                <textarea class="form-control" name="value"></textarea>
+                <div></div>
+            </div>
+        `;
+        addStyle(`
+            .sandbox-container {
+                display: flex;
+                flex-wrap: nowrap;
+                height: 100%;
+                padding: 0.5em;
+                margin-bottom: 2em;
+            }
+            .sandbox-container > textarea {
+                width: 50%;
+                resize: vertical;
+            }
+            .sandbox-container > div {
+                width: 50%;
+                background: #fff;
+                border-radius: 4px;
+                border: rgb(0,0,0,0.25) solid 1.25px;
+                padding: 1em 1.5em;
+            }
+        `);
+        if (localStorage['explore:sandbox']) {
+            $('.sandbox-container > textarea')[0].value = localStorage['explore:sandbox'];
+            $('.sandbox-container > div')[0].innerHTML = window.Blockey.Utils.markdownToHtml(localStorage['explore:sandbox']);
+        }
+        $('.sandbox-container > textarea')[0].addEventListener('input', (e) => {
+            $('.sandbox-container > div')[0].innerHTML = window.Blockey.Utils.markdownToHtml(e.target.value);
+            localStorage['explore:sandbox'] = e.target.value;
+        })
+    };
+    addFindElement('.sidebar-nav_navigations_1X4Qe', (element) => {
+        let e = document.createElement('div');
+        e.className = 'sidebar-nav_nav_1dRFd sidebar-nav_on_2_HNF';
+        e.innerHTML = `
+            <div class="sidebar-nav_navName_2Wr6t">
+                <a class="" href="/Sandbox"><i class="edit lg"></i>沙盒</a>
+            </div>
+        `;
+        element.append(e);
     })
     // Your code here...
 })();
