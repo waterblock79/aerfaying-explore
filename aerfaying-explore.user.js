@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.12.0
+// @version      1.12.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.12.0';
+    const version = '1.12.1';
 
     if (location.search === '?NoUserscript') return;
 
@@ -49,6 +49,10 @@
 
     //  $(selector)
     //  即 document.querySelectorAll(selector)
+    /**
+     * @param {string} selector 
+     * @returns {HTMLElement[]}
+     */
     const $ = (selector) => document.querySelectorAll(selector);
 
 
@@ -259,7 +263,7 @@
         text: '快速搜索',
         type: 'check',
         default: true,
-        desp: `存储 ${localStorage['explore:searchDb'] ? JSON.parse(localStorage['explore:searchDb']).length : 0} 条数据，共 ${localStorage['explore:searchDb'] ? (localStorage['explore:searchDb'].length / 1024).toFixed(2) : 0} KB，<a href="/AboutLocalSearch" target="_blank">详细</a>`
+        desp: `自动在本地存储并索引访问过的页面，使用 Ctrl + K 快捷键可以呼出搜索栏并搜索这些页面。`
     }, {
         tag: 'explore:betterPriseAndBlame',
         text: '优化评论赞踩显示机制',
@@ -1421,16 +1425,16 @@
 
         // 创建搜索结果HTMl的函数
         const createSearchResultHTMLCode = (item) => `
-            <a class="result" href="${encodeURI(item.url)}">
+            <a class="result" href="${encodeURI(item.url)}" target="_blank">
                 ${item.image ?
                 `<img src="https://cdn.gitblock.cn/Media?name=${encodeURI(item.image)}" />` :
                 /*`<i class="mission lg" style="margin: 0 0.55em 0 0.25em; color: lightslategrey;"></i>`*/``
             }
                 <div style="overflow: hidden">
                     <div style="font-size: 1.25em">${encodeHTML(item.name)}</div>
-                    <div style="font-size: 0.75em; opacity: 0.75">${encodeHTML(item.url)} - 最后访问：${item.lastVisit === 0 ? '很久以前' : Date.now() - item.lastVisit < 24 * 60 * 60 * 1000 ?
-                '' + (new Date(item.lastVisit)).toLocaleTimeString().split(':').splice(0, 2).join(':') :
-                Math.floor((Date.now() - item.lastVisit) / 24 / 60 / 60 / 1000) + ' 天前'
+                    <div style="font-size: 0.75em; opacity: 0.75">${encodeHTML(item.url)} - 最后访问：${item.lastVisit === 0 ? '很久以前' :
+                Date.now() - item.lastVisit < 24 * 60 * 60 * 1000 ? (new Date(item.lastVisit)).toLocaleTimeString().split(':').splice(0, 2).join(':') :
+                    Math.floor((Date.now() - item.lastVisit) / 24 / 60 / 60 / 1000) + ' 天前'
             }</div>
                 </div>
             </a>
@@ -1576,13 +1580,13 @@
             }, 100);
         });
         addEventListener('keydown', (e) => {
+            if (e.key == 'Escape') {
+                searchRootElement.style.display = 'none';
+                e.preventDefault();
+            }
             if ((e.ctrlKey || e.metaKey) && e.key == 'k') {
                 searchRootElement.style.display = '';
                 searchRootElement.querySelector('input').focus();
-                e.preventDefault();
-            }
-            if (e.key == 'escape') {
-                searchRootElement.style.display = 'none';
                 e.preventDefault();
             }
         });
@@ -1621,7 +1625,7 @@
                         result.slice(0, 75).forEach((item) => {
                             container.innerHTML += createSearchResultHTMLCode(item);
                         });
-                        if (result.length> 75) {
+                        if (result.length > 75) {
                             container.innerHTML += `
                             <div style="margin: 0.25em 0.75em;">
                                 最多显示 75 条搜索结果
@@ -1745,6 +1749,9 @@
 
     // Markdown 沙盒
     if (location.pathname == '/Sandbox') {
+        window.sandbox = {
+            autoScroll: false
+        }
         $('title')[0].innerHTML = `Markdown 沙盒 - Aerfaying Explore`;
         $('.container')[1].innerHTML = `
             <h4 style="margin: 0.5em 0.5em">
@@ -1754,6 +1761,18 @@
                     line-height: 2em;
                 ">
                     您可以在 Markdown 沙盒中使用 A 营的 Markdown 并实时预览。编辑会实时保存到本地存储中，请勿在这里输入隐私信息或者重要内容。
+                    <br/>
+                    <p style="
+                        display: flex;
+                        align-items: stretch;
+                        font-size: 0.8em;
+                        margin: 0.5em 0;
+                    ">
+                        <input type="checkbox" id="autoScroll" style="
+                            margin: 0 0.75em 0 0;
+                        ">
+                        <span>自动跟随滚动</span>
+                    </p>
                 </p>
             </h4>
             <div class="sandbox-container">
@@ -1779,6 +1798,16 @@
                 border-radius: 4px;
                 border: rgb(0,0,0,0.25) solid 1.25px;
                 padding: 1em 1.5em;
+                overflow: auto;
+            }
+            .sandbox-container[autoScroll='true'] {
+                height: 40em;
+            }
+            .sandbox-container[autoScroll='true'] > div {
+                height: 100%;
+            }
+            .sandbox-container[autoScroll='true'] > textarea {
+                resize: none;
             }
         `);
         if (localStorage['explore:sandbox']) {
@@ -1799,6 +1828,18 @@
             </div>
         `;
         element.append(e);
+    });
+    addFindElement('#autoScroll', (element) => {
+        element.addEventListener('click', (e) => {
+            window.sandbox.autoScroll = !window.sandbox.autoScroll;
+            $('.sandbox-container')[0].setAttribute('autoScroll', window.sandbox.autoScroll);
+        });
+        $('.sandbox-container > textarea')[0].addEventListener('scroll', (e) => {
+            if (!window.sandbox.autoScroll) return;
+            const content = $('.sandbox-container > div')[0];
+            const textarea = $('.sandbox-container > textarea')[0]
+            content.scroll(0, (textarea.scrollTop + textarea.clientHeight * 0.5) / textarea.scrollHeight * content.scrollHeight - content.clientHeight * 0.5);
+        });
     })
     // Your code here...
 })();
