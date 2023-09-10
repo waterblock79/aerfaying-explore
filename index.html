@@ -82,6 +82,11 @@
             background-color: #f5f5f5;
         }
 
+        .install .install-now {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
         .install .menu {
             width: 100%;
             margin: .75em 0 0 0;
@@ -154,6 +159,12 @@
         </div>
         <div class="install" id="安装插件">
             <h2>安装插件</h2>
+            <p>
+                <small>已经安装插件管理器？</small>
+                <a class="install-now" href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js">
+                    点我直接安装 / 更新
+                </a>
+            </p>
             <div>
                 推荐使用 Tampermonkey（油猴）作为插件管理器，如果您已经安装了插件管理器了，请转到 <a href="#"
                     @click="installStep = 1; installSubStep = 0">安装该 Userscript</a>。
@@ -377,6 +388,11 @@
                             text: 'Markdown 沙盒',
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/Markdown沙盒.png',
                             desp: '在 Markdown 沙盒中使用 A 营的 Markdown 并实时预览。编辑会实时保存到本地存储中，所以请不要在这里输入隐私信息或者重要内容。'
+                        },
+                        {
+                            text: '稳定和优化作品资源加载',
+                            image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/稳定和优化作品资源加载.png',
+                            desp: '作品资源加载有时候会出现 502 错误导致作品加载失败，这个功能可以在资源加载错误时自动重新加载来避免这个问题，并显示资源的加载进度'
                         }
                     ]
                 }

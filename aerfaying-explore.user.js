@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.12.1
+// @version      1.13.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.12.1';
+    const version = '1.13.0';
 
     if (location.search === '?NoUserscript') return;
 
@@ -270,6 +270,12 @@
         type: 'check',
         default: false,
         desp: `在评论下方只显示点赞数减去点踩数的值，并且这个值小于等于 0 时不显示，类似 B 站评论，可以对“点踩侠”眼不见心不烦`
+    }, {
+        tag: 'explore:projectAssetLoad',
+        text: '稳定与优化作品资源加载',
+        type: 'check',
+        default: false,
+        desp: `自动重新加载加载失败的作品资源，并显示加载进度（实验性功能）`
     }
     ];
     // 设置默认值
@@ -429,6 +435,49 @@
         }, 1000)
     }
 
+    // 请求作品资源（GET https://cdn.gitblock.cn/Project/GetAsset?name=）失败时自动重新加载，并显示加载进度
+    if (localStorage['explore:projectAssetLoad'] == 'true') {
+        const fetch_old = window.fetch;
+        var projectAssetLoadLog = [];
+        var projectAssetLoadCount = {
+            total: 0,
+            success: 0,
+            failed: 0
+        }
+        window.fetch = (...args) => {
+            if (args[0].match(/http(s)?:\/\/cdn.gitblock.cn\/Project\/GetAsset\?name=/)) {
+                projectAssetLoadCount.total++;
+                return new Promise((resolve, reject) => {
+                    let retryCount = 0;
+                    const tryFetch = async () => {
+                        let response;
+                        try {
+                            response = await fetch(...args);
+                        } catch (e) {
+                            response = false;
+                        }
+                        if (response?.status === 200) { // 请求成功
+                            resolve(response);
+                            projectAssetLoadLog.push(`成功 ${args[0].split('=')[1]}`);
+                            projectAssetLoadCount.success++;
+                        } else if (retryCount <= 8) { // 请求失败，重试
+                            retryCount++;
+                            setTimeout(tryFetch, 1000);
+                            projectAssetLoadLog.push(`重试 ${args[0].split('=')[1]}（第 ${retryCount} 次）`);
+                        } else { // 请求失败次数超过 8 次放弃加载并返回占位图
+                            resolve(fetch(`data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAABmSURBVDhPtYwBCsAwCAP7/093c2tEaya6sQOhDcmNk/nx7kcXJ0BQxW5UIFQke98JhEzCukEgdDIqEGyedR4FwiqsX+Rfgc2zDhV0siBgRcC6TpCNwd5XQWUM7OYSdMYAOxW8uzEPkuP1J7Jf5JYAAAAASUVORK5CYII=`));
+                            projectAssetLoadCount.failed++;
+                            projectAssetLoadLog.push(`失败 ${args[0].split('=')[1]}`);
+                        };
+                    };
+                    tryFetch();
+                })
+            } else {
+                return fetch_old(...args);
+            }
+        }
+    }
+
     // 对于加载提示的介绍
     if (location.pathname == '/AboutLoading') {
         $('title')[0].innerHTML = `关于加载中的提示 - Aerfaying Explore`;
@@ -543,6 +592,11 @@
                     width: 0 !important;
                 }
             }
+            .explore-project-loading {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
             `);
             // 默认隐藏
             $('.explore-loading')[0].style.display = 'none';
@@ -564,6 +618,12 @@
             try { $('.explore-loading-text')[0].style.display = 'block'; } catch (e) { }
             // 轮询直到原先的加载遮盖消失
             let interval = setInterval(() => {
+                // 设置作品资源加载 Log
+                // console.log(projectAssetLoadLog)
+                if (localStorage['explore:projectAssetLoad'] == 'true' && $('pre.explore-asset-load-log')[0] && projectAssetLoadLog?.length) {
+                    $('pre.explore-asset-load-log')[0].innerText = projectAssetLoadLog[projectAssetLoadLog.length - 1] + `\n` + `共 ${projectAssetLoadCount.total} 个，完成 ${projectAssetLoadCount.success} 个`;
+                }
+                // 清除加载遮盖
                 if (!$('.loader_background_1-Rwn')[0]) {
                     $('.explore-loading')[0].style.display = 'none';
                     try { $('.explore-loading-text')[0].style.display = 'none'; } catch (e) { }
@@ -579,6 +639,16 @@
                         // 删除作品封面背景
                         try { $('.explore-project-cover')[0].remove(); } catch (e) { }
                         clearInterval(interval);
+                        // 作品资源加载数据重置
+                        if (localStorage['explore:projectAssetLoad'] == 'true') {
+                            if (projectAssetLoadCount.failed > 0) {
+                                Blockey.Utils.confirm('加载错误', `共 ${projectAssetLoadCount.failed} 个资源加载错误<br/>加载日志：` + projectAssetLoadLog.map(x => encodeHTML(x)).join('<br/>'));
+                            }
+                            console.log('加载资源统计', projectAssetLoadCount);
+                            console.log('加载日志', projectAssetLoadLog);
+                            projectAssetLoadCount = { success: 0, failed: 0, total: 0 };
+                            projectAssetLoadLog = [];
+                        }
                     }
                 }
             }, 50);
@@ -597,10 +667,20 @@
                     <img class="loader_bottom-block_ABwSu" src="https://cdn.gitblock.cn/static/gui/static/assets/ce5820b006d753e4133f46ae776f4d96.svg">
                 </div>
                 <div class="loader_title_28GDz" style="
-                    color: white;
+                    color: #fff;
                 ">
-                    <span>载入项目</span
-                ></div>
+                    <span>载入项目</span>
+                </div>
+                ${localStorage['explore:projectAssetLoad'] == 'true' ?
+                    `<pre class="explore-asset-load-log" style="
+                        max-height: 4em;
+                        padding: 0;
+                        background: none;
+                        border: none;
+                        color: #fff;
+                        text-align: center;
+                    "></pre>` : ''
+                }
             `;
             $('div.stage_green-flag-overlay-wrapper_3bCO-.box_box_tWy-0')[0].appendChild(projectLoad);
             // 隐藏作品的大绿旗摁钮
@@ -1419,11 +1499,11 @@
                         })
                     });
                     localStorage.removeItem('explore:searchDb');
-                })
+                });
             } catch (e) { }
         }
 
-        // 创建搜索结果HTMl的函数
+        // 创建搜索结果HTML的函数
         const createSearchResultHTMLCode = (item) => `
             <a class="result" href="${encodeURI(item.url)}" target="_blank">
                 ${item.image ?

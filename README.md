@@ -91,3 +91,7 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 19.   Markdown 沙盒
       
       <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/Markdown沙盒.png" style="width: 20em"/>
+
+20.   稳定和优化作品资源加载
+      
+      <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/稳定和优化作品资源加载.png" style="width: 20em"/>
