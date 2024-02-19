@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.13.0
+// @version      1.14.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.13.0';
+    const version = '1.14.0';
 
     if (location.search === '?NoUserscript') return;
 
@@ -159,7 +159,7 @@
     // 监听请求（这里用的是 jQuery 的 $）
     window.$(document).ajaxSuccess(function (event, xhr, settings, response) {
         if (settings.url.search(/WebApi\/Projects\/[0-9]+\/Get/) == 1) { // /WebApi/Projects/*/Get 获取作品信息
-            projectThumbId = response.project.thumbId; // 在变量里保存获取到的作品封面
+            projectThumbId = response?.project?.thumbId; // 在变量里保存获取到的作品封面
         }
         if (settings.url == '/WebApi/Comment/GetPage') { // /WebApi/Comment/GetPage 评论
             response.replies.forEach((comment) => {
@@ -452,7 +452,7 @@
                     const tryFetch = async () => {
                         let response;
                         try {
-                            response = await fetch(...args);
+                            response = await fetch_old(...args);
                         } catch (e) {
                             response = false;
                         }
@@ -1920,6 +1920,89 @@
             const textarea = $('.sandbox-container > textarea')[0]
             content.scroll(0, (textarea.scrollTop + textarea.clientHeight * 0.5) / textarea.scrollHeight * content.scrollHeight - content.clientHeight * 0.5);
         });
+    })
+
+    // 查看全部精华选票
+    addFindElement('.featured-vote-modal_body_F4hto, .featured-vote-modal_itemDetails_3rvD6', (element) => {
+        const btn = document.createElement('span');
+        btn.className = 'btn btn-primary btn-sm';
+        btn.style.margin = '1em 0';
+        btn.innerText = '查看全部投票';
+        let btnAppend = setInterval(() => {
+            if (element.parentNode.querySelector('tbody')) {
+                element.parentNode.append(btn);
+                clearInterval(btnAppend);
+            }
+        });
+        btn.addEventListener('click', (event) => {
+            fetch(`https://gitblock.cn/WebApi/Projects/${Blockey.Utils.getContext().target.id}/GetEvaluates`, { "method": "POST" })
+                .then(reponse => reponse.json())
+                .then(data => {
+                    const tbody = element.parentNode.querySelector('tbody');
+                    tbody.innerHTML = `
+                        <tr class="responsive-table_head_2zj6E">
+                            <th class="">投票人</th>
+                            <th class="">等级</th>
+                            <th class="">平均分</th>
+                            <th class="">投票时间</th>
+                            <th class="">创意构思</th>
+                            <th class="">艺术审美</th>
+                            <th class="">程序思维</th>
+                            <th class="">评价</th>
+                        </tr>
+                    `;
+                    data.evaluates.forEach((vote) => {
+                        const tr = document.createElement('tr');
+                        tr.className = '';
+                        // 投票人
+                        const voterTd = document.createElement('td');
+                        const voter = document.createElement('a');
+                        voter.href = '/Users/' + vote.creator.id;
+                        voter.className = 'user-info_wrapper_2acbL';
+                        const voterAvatar = document.createElement('img');
+                        voterAvatar.className = 'thumb-img_thumb_PzoKt thumb-img_thumb-border_14aaQ user-info_image_1bbCz user-info_circle_3xryU';
+                        voterAvatar.src = 'https://cdn.gitblock.cn/Media?name=' + vote.creator.thumbId;
+                        voter.append(voterAvatar);
+                        const voterName = document.createElement('span');
+                        voterName.className = 'username';
+                        voterName.innerText = vote.creator.username;
+                        voter.append(voterName);
+                        voterTd.append(voter);
+                        tr.append(voterTd);
+                        // 等级
+                        const level = document.createElement('td');
+                        level.innerText = ['', '初级', '中级', '高级', '史诗级', '传说级'][vote.level] + '精华';
+                        tr.append(level);
+                        // 均分
+                        const average = document.createElement('td');
+                        average.innerText = ((vote.scoreArts + vote.scoreCreative + vote.scoreProgram) / 3).toFixed(1);
+                        tr.append(average);
+                        // 投票时间
+                        const time = document.createElement('td');
+                        time.innerText = `${new Date(1708316249000).getMonth() + 1}-${new Date(1708316249000).getDate()}`;
+                        tr.append(time);
+                        // 三维分
+                        const art = document.createElement('td');
+                        const creative = document.createElement('td');
+                        const program = document.createElement('td');
+                        art.innerText = vote.scoreArts;
+                        creative.innerText = vote.scoreCreative;
+                        program.innerText = vote.scoreProgram;
+                        tr.append(creative);
+                        tr.append(art);
+                        tr.append(program);
+                        // 评价
+                        const descp = document.createElement('td');
+                        descp.innerText = vote.descp.replaceAll('\n', ' ');
+                        tr.append(descp);
+                        tbody.append(tr);
+                    })
+                })
+        });
+    });
+
+    addFindElement('span.modal_back-button_3HvWm', (element) => {
+        element.className = 'btn btn-primary';
     })
     // Your code here...
 })();
