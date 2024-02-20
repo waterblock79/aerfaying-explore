@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.14.0
+// @version      1.14.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.14.0';
+    const version = '1.14.1';
 
     if (location.search === '?NoUserscript') return;
 
@@ -1935,7 +1935,7 @@
             }
         });
         btn.addEventListener('click', (event) => {
-            fetch(`https://gitblock.cn/WebApi/Projects/${Blockey.Utils.getContext().target.id}/GetEvaluates`, { "method": "POST" })
+            fetch(`${Blockey.DOMAIN.baseUri}/WebApi/Projects/${Blockey.Utils.getContext().target.id}/GetEvaluates`, { "method": "POST" })
                 .then(reponse => reponse.json())
                 .then(data => {
                     const tbody = element.parentNode.querySelector('tbody');
