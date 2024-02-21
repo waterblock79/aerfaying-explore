@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.14.1
+// @version      1.15.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.14.1';
+    const version = '1.15.0';
 
     if (location.search === '?NoUserscript') return;
 
@@ -149,9 +149,8 @@
     // encodeHTML(str)
     // 转义字符串中的 HTML 字符
     const encodeHTML = (str) => {
-        let textNode = document.createTextNode(str);
         let div = document.createElement('div');
-        div.append(textNode);
+        div.innerText = str;
         return div.innerHTML;
     };
 
@@ -276,6 +275,12 @@
         type: 'check',
         default: false,
         desp: `自动重新加载加载失败的作品资源，并显示加载进度（实验性功能）`
+    }, {
+        tag: 'explore:commentVisibilityPredict',
+        text: '预测并提示评论发出后的仅好友可见状态',
+        type: 'check',
+        default: true,
+        desp: '这是一个实验性功能'
     }
     ];
     // 设置默认值
@@ -1935,7 +1940,7 @@
             }
         });
         btn.addEventListener('click', (event) => {
-            fetch(`${Blockey.DOMAIN.baseUri}/WebApi/Projects/${Blockey.Utils.getContext().target.id}/GetEvaluates`, { "method": "POST" })
+            fetch(`/WebApi/Projects/${Blockey.Utils.getContext().target.id}/GetEvaluates`, { "method": "POST" })
                 .then(reponse => reponse.json())
                 .then(data => {
                     const tbody = element.parentNode.querySelector('tbody');
@@ -1954,47 +1959,28 @@
                     data.evaluates.forEach((vote) => {
                         const tr = document.createElement('tr');
                         tr.className = '';
-                        // 投票人
-                        const voterTd = document.createElement('td');
-                        const voter = document.createElement('a');
-                        voter.href = '/Users/' + vote.creator.id;
-                        voter.className = 'user-info_wrapper_2acbL';
-                        const voterAvatar = document.createElement('img');
-                        voterAvatar.className = 'thumb-img_thumb_PzoKt thumb-img_thumb-border_14aaQ user-info_image_1bbCz user-info_circle_3xryU';
-                        voterAvatar.src = 'https://cdn.gitblock.cn/Media?name=' + vote.creator.thumbId;
-                        voter.append(voterAvatar);
-                        const voterName = document.createElement('span');
-                        voterName.className = 'username';
-                        voterName.innerText = vote.creator.username;
-                        voter.append(voterName);
-                        voterTd.append(voter);
-                        tr.append(voterTd);
-                        // 等级
-                        const level = document.createElement('td');
-                        level.innerText = ['', '初级', '中级', '高级', '史诗级', '传说级'][vote.level] + '精华';
-                        tr.append(level);
-                        // 均分
-                        const average = document.createElement('td');
-                        average.innerText = ((vote.scoreArts + vote.scoreCreative + vote.scoreProgram) / 3).toFixed(1);
-                        tr.append(average);
-                        // 投票时间
-                        const time = document.createElement('td');
-                        time.innerText = `${new Date(1708316249000).getMonth() + 1}-${new Date(1708316249000).getDate()}`;
-                        tr.append(time);
-                        // 三维分
-                        const art = document.createElement('td');
-                        const creative = document.createElement('td');
-                        const program = document.createElement('td');
-                        art.innerText = vote.scoreArts;
-                        creative.innerText = vote.scoreCreative;
-                        program.innerText = vote.scoreProgram;
-                        tr.append(creative);
-                        tr.append(art);
-                        tr.append(program);
-                        // 评价
-                        const descp = document.createElement('td');
-                        descp.innerText = vote.descp.replaceAll('\n', ' ');
-                        tr.append(descp);
+                        tr.innerHTML = `
+                            <td>
+                                <a href="/Users/${encodeURIComponent(vote.creator.id)}" class="user-info_wrapper_2acbL">
+                                    <img 
+                                        class="thumb-img_thumb_PzoKt thumb-img_thumb-border_14aaQ user-info_image_1bbCz user-info_circle_3xryU"
+                                        src="https://cdn.gitblock.cn/Media?name=${encodeURIComponent(vote.creator.thumbId)}"
+                                    >
+                                    <span class="username">${encodeHTML(vote.creator.username)}</span>
+                                </a>
+                            </td>
+                            <td 
+                                style="text-wrap: nowrap"
+                            >
+                                ${['', '初级', '中级', '高级', '史诗级', '传说级'][vote.level] + '精华'}
+                            </td>
+                            <td>${((vote.scoreArts + vote.scoreCreative + vote.scoreProgram) / 3).toFixed(1)}</td>
+                            <td>${`${new Date(1708316249000).getMonth() + 1}-${new Date(1708316249000).getDate()}`}</td>
+                            <td>${Number(vote.scoreCreative)}</td>
+                            <td>${Number(vote.scoreArts)}</td>
+                            <td>${Number(vote.scoreProgram)}</td>
+                            <td>${encodeHTML(vote.descp.replaceAll('\n', ' '))}</td>
+                        `;
                         tbody.append(tr);
                     })
                 })
@@ -2003,6 +1989,85 @@
 
     addFindElement('span.modal_back-button_3HvWm', (element) => {
         element.className = 'btn btn-primary';
-    })
+    });
+
+    // 提示评论可能被设为仅好友可见
+    if (localStorage['explore:commentVisibilityPredict'] == 'true') {
+        let currentFriendVisibleOnlyStatus = 0;
+        // 尚未获取到好友状态时设置状态为 -1
+        addHrefChangeEvent(() => {
+            currentFriendVisibleOnlyStatus = -1
+        });
+        // 设置提示
+        addFindElement('.reply-box_footer_2AkDv > span', (element) => {
+            let wait = setInterval(() => {
+                if (currentFriendVisibleOnlyStatus >= 0) {
+                    if (currentFriendVisibleOnlyStatus == 1) {
+                        const alert = document.createElement('span');
+                        alert.style.opacity = 0.5;
+                        alert.style.margin = '0 0.5em';
+                        alert.style.userSelect = 'none';
+                        alert.innerText = '[仅好友可见]';
+                        alert.addEventListener('click', () => {
+                            Blockey.Utils.confirm('这个评论可能被设为“仅好友可见”状态',
+                                `
+                                2022 年 8 月社区推出“<b>仅好友可见</b>”功能，测试表明：<br/>
+                                <div style="
+                                    margin: 0.75em 1em;
+                                    line-height: 1.5em;
+                                ">
+                                    1. 如果发布评论的用户不是评论区的所有者或者其好友，那么评论会被默认设定为“仅好友可见”状态，需要评论区所有者手动在评论右上角点击“公开”使该评论对所有人都可见。<br/>
+                                    2. 只有评论区的所有者或其好友才可以看到“仅好友可见”状态的评论。<br/>
+                                    3. 助手机器人会影响评论的可见性。当评论区被助手机器人设为“仅好友可评论”时，即使评论的发布者是评论区所有者的好友，评论也会被自动设为“仅好友可见”状态；当“禁止评论”时，除了评论区所有者外的所有用户都无法查看“仅好友可见”的评论（即使是所有者的好友）。<br/>
+                                    参考资料：<a href="/Studios/24291/Forum/PostView?postId=35421">阿儿法营/稽木世界用户入门指南 - 论坛</a>
+                                </div>
+                                根据以上规则，<b>我们预测该评论发出后将会被设置为“仅好友可见”状态</b>。
+                            `
+                            );
+                        })
+                        element.append(alert);
+                    }
+                    clearInterval(wait);
+                }
+                console.log(currentFriendVisibleOnlyStatus)
+            }, 100);
+        });
+        // 获取好友状态
+        addFindElement('.comment-panel_comment-panel_3pBsc', () => {
+            if (['User', 'ForumPost', 'Project'].includes(Blockey.Utils.getContext().targetType)) {
+                const creatorId = Blockey.Utils.getContext().target.creatorId || Blockey.Utils.getContext().target.id;
+                const myId = Blockey.Utils.getContext().loggedInUser.id;
+                // 自己在自己的评论区评论不会仅好友可见
+                if (creatorId == myId) {
+                    currentFriendVisibleOnlyStatus = 0;
+                    return;
+                }
+                // 助手机器人会影响评论的可见性。当评论区被助手机器人设为“仅好友可评论”时，即使评论的发布者是评论区所有者的好友，评论也会被自动设为“仅好友可见”状态；当“禁止评论”时，除了评论区所有者外的所有用户都无法查看“仅好友可见”的评论（即使是所有者的好友）。
+                if (Blockey.Utils.getContext().target.commentOpenLevel && Blockey.Utils.getContext().target.commentOpenLevel < 2) {
+                    currentFriendVisibleOnlyStatus = 1;
+                    return;
+                }
+                // 获取与评论区所有者的好友状态
+                fetch(`/WebApi/Users/${myId}/GetPagedUserFollowers`, {
+                    "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
+                    "referrer": `https://gitblock.cn/Users/${myId}/My/FollowedUsers`,
+                    "body": `type=Followed&usernameOrId=#${creatorId}&order=createTime&pageSize=24&pageIndex=1`,
+                    "method": "POST",
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        const result = data.pagedUserFollowers.items.filter(user => user.isBidirectional);
+                        if (!result.length) currentFriendVisibleOnlyStatus = 1; // 仅好友可见
+                        else currentFriendVisibleOnlyStatus = 0; // 非仅好友可见
+                    })
+                    .catch(() => {
+                        Blockey.Utils.Alerter.info('“仅好友可见”预测失败');
+                        currentFriendVisibleOnlyStatus = 0; // 预测失败
+                    });
+            }
+        });
+    }
     // Your code here...
 })();

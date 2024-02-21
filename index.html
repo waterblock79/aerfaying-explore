@@ -110,6 +110,14 @@
             box-shadow: 1px 1px 15px rgb(0, 0, 0, 0.075);
             margin: 1em;
         }
+        
+        .about-settings {
+            margin-bottom: 1em;
+            padding: 1em;
+            text-align: center;
+            font-size: 1.075em;
+            line-height: 1.6em;
+        }
 
         .function-card>p {
             line-height: 1em;
@@ -251,7 +259,11 @@
                 </div>
             </div>
             <div class="function" id="功能">
-                <h2>功能</h2>
+                <h2 class="function-title">功能</h2>
+                <div class="function-card about-settings">
+                    插件设置在顶部栏头像下的下拉菜单中<br/>
+                    部分功能需要在插件设置中手动打开
+                </div>
                 <div class="function-show">
                     <div v-for="(item,index) in userscriptFunctions" class="function-card">
                         <div class="text">
@@ -398,6 +410,11 @@
                             text: '查看全部精华投票',
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/显示全部精华投票.png',
                             desp: '查看全部等级的精华投票，而不是仅当前作品所在等级的投票。'
+                        },
+                        {
+                            text: '提示评论可能会被设为仅好友可见',
+                            image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/仅好友可见提示.png',
+                            desp: '预测评论在发出后是否会被设为仅好友可见状态并进行提示。'
                         },
                     ]
                 }

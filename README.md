@@ -21,7 +21,8 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 
 ## 功能
 
-**插件设置在菜单导航条下（如右图）。**
+**插件设置在顶栏的下拉菜单中。**  
+**部分功能需要手动在插件设置中开启！**
 
 1. 将原先全屏的加载遮盖替换为一个小加载提示
 
@@ -79,6 +80,9 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 20. 稳定和优化作品资源加载
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/稳定和优化作品资源加载.png" style="width: 20em"/>
-20. 查看全部精华投票
+21. 查看全部精华投票
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/显示全部精华投票.png" style="width: 20em"/>
+21. 提示评论可能会被设为仅好友可见
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/仅好友可见提示.png" style="width: 20em"/>
