@@ -83,6 +83,6 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 21. 查看全部精华投票
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/显示全部精华投票.png" style="width: 20em"/>
-21. 提示评论可能会被设为仅好友可见
+22. 提示评论发出后可能会处于仅好友可见状态
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/仅好友可见提示.png" style="width: 20em"/>

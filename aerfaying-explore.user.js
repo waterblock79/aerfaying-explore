@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.15.0
+// @version      1.15.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.15.0';
+    const version = '1.15.1';
 
     if (location.search === '?NoUserscript') return;
 
@@ -1975,14 +1975,19 @@
                                 ${['', '初级', '中级', '高级', '史诗级', '传说级'][vote.level] + '精华'}
                             </td>
                             <td>${((vote.scoreArts + vote.scoreCreative + vote.scoreProgram) / 3).toFixed(1)}</td>
-                            <td>${`${new Date(1708316249000).getMonth() + 1}-${new Date(1708316249000).getDate()}`}</td>
+                            <td 
+                                style="text-wrap: nowrap"
+                            >
+                                ${Blockey.Utils.formatDateString(new Date(vote.createTime),'yyyy-MM-dd')}
+                            </td>
                             <td>${Number(vote.scoreCreative)}</td>
                             <td>${Number(vote.scoreArts)}</td>
                             <td>${Number(vote.scoreProgram)}</td>
                             <td>${encodeHTML(vote.descp.replaceAll('\n', ' '))}</td>
                         `;
                         tbody.append(tr);
-                    })
+                    });
+                    btn.remove();
                 })
         });
     });
@@ -2021,7 +2026,7 @@
                                     3. 助手机器人会影响评论的可见性。当评论区被助手机器人设为“仅好友可评论”时，即使评论的发布者是评论区所有者的好友，评论也会被自动设为“仅好友可见”状态；当“禁止评论”时，除了评论区所有者外的所有用户都无法查看“仅好友可见”的评论（即使是所有者的好友）。<br/>
                                     参考资料：<a href="/Studios/24291/Forum/PostView?postId=35421">阿儿法营/稽木世界用户入门指南 - 论坛</a>
                                 </div>
-                                根据以上规则，<b>我们预测该评论发出后将会被设置为“仅好友可见”状态</b>。
+                                根据以上规则，<b>我们预测该评论发出后将会处于“仅好友可见”状态</b>。
                             `
                             );
                         })
