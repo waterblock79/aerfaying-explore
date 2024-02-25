@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.15.1
+// @version      1.15.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.15.1';
+    const version = '1.15.2';
 
     if (location.search === '?NoUserscript') return;
 
@@ -1388,7 +1388,7 @@
                 }
                 messageListByForId[message.forType + message.forId].push(message);
             });
-            console.log(messageListByForId);
+            // console.log(messageListByForId);
             // 屮，走，忽略
             Object.keys(messageListByForId).forEach((forId) => {
                 for (let i in messageListByForId[forId]) {
@@ -1965,8 +1965,7 @@
                                     <img 
                                         class="thumb-img_thumb_PzoKt thumb-img_thumb-border_14aaQ user-info_image_1bbCz user-info_circle_3xryU"
                                         src="https://cdn.gitblock.cn/Media?name=${encodeURIComponent(vote.creator.thumbId)}"
-                                    >
-                                    <span class="username">${encodeHTML(vote.creator.username)}</span>
+                                    ><span class="username">${encodeHTML(vote.creator.username)}</span>
                                 </a>
                             </td>
                             <td 
@@ -2034,7 +2033,6 @@
                     }
                     clearInterval(wait);
                 }
-                console.log(currentFriendVisibleOnlyStatus)
             }, 100);
         });
         // 获取好友状态
@@ -2074,5 +2072,16 @@
             }
         });
     }
+
+    // 增添从新闻公告打开原帖的能力
+    addFindElement('.panel2_panelHead_1Bn6y', (element) => {
+        if (location.href.match(/\/Posts\/([0-9]+)\/View\/?/g)) {
+            const a = document.createElement('a');
+            a.href = `/Studios/${Blockey.Utils.getContext().target.studioId}/Forum/PostView?postId=${Blockey.Utils.getContext().target.id}`;
+            a.className = 'btn btn-primary';
+            a.innerText = '前往原帖';
+            element.append(a);
+        }
+    })
     // Your code here...
 })();
