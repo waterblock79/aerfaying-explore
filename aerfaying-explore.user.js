@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.15.2
+// @version      1.15.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.15.2';
+    const version = '1.15.3';
 
     if (location.search === '?NoUserscript') return;
 
@@ -399,7 +399,6 @@
                     <option value="none">不自动跳转</option>
                     <option value="aerfaying">自动跳转 aerfaying.com</option>
                     <option value="gitblock">自动跳转 gitblock.cn</option>
-                    <option value="3eworld">自动跳转 3eworld.cn</option>
                 </select>
             </div>
         `;
@@ -1273,8 +1272,6 @@
         let autoRedirect = GM_getValue('explore:autoRedirect', 'none');
         if (autoRedirect == 'aerfaying' && window.location.host != 'aerfaying.com') {
             window.location.host = 'aerfaying.com';
-        } else if (autoRedirect == '3eworld' && window.location.host != '3eworld.cn') {
-            window.location.host = '3eworld.cn';
         } else if (autoRedirect == 'gitblock' && window.location.host != 'gitblock.cn') {
             window.location.host = 'gitblock.cn';
         }
