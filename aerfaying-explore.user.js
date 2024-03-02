@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.15.3
+// @version      1.16.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.15.3';
+    const version = '1.16.0';
 
     if (location.search === '?NoUserscript') return;
 
@@ -274,13 +274,18 @@
         text: '稳定与优化作品资源加载',
         type: 'check',
         default: false,
-        desp: `自动重新加载加载失败的作品资源，并显示加载进度（实验性功能）`
+        desp: `自动重新加载加载失败的作品资源，并显示重新的加载进度（实验性功能）`
     }, {
         tag: 'explore:commentVisibilityPredict',
         text: '预测并提示评论发出后的仅好友可见状态',
         type: 'check',
-        default: true,
-        desp: '这是一个实验性功能'
+        default: true
+    }, {
+        tag: 'explore:betterHomepage',
+        text: '更好的主页',
+        type: 'check',
+        default: false,
+        desp: '这是一个实验性功能，请谨慎使用'
     }
     ];
     // 设置默认值
@@ -547,8 +552,8 @@
     // 替换掉原先全屏的加载遮盖
     let projectThumbId = 'E0D08BE45041CB909364CE99790E7249.png'; // 在加载作品时候需要用到的作品封面 assets ID
     addFindElement('.menu-bar_right-bar_3dIRQ', (element) => {
-        // 如果其设置为“保持原状”，那就直接退出
-        if (localStorage['explore:loading'] == 0) return;
+        // 如果其设置为“保持原状”或者这页是签到的嵌入页，那就直接退出
+        if (localStorage['explore:loading'] == 0 || location.search === '?openRobotCheckIn' + localStorage['openRobotCheckInKey']) return;
         // 先隐藏了原先的加载遮盖
         addStyle(`
             .loader_background_1-Rwn { display: none !important }
@@ -2079,6 +2084,180 @@
             a.innerText = '前往原帖';
             element.append(a);
         }
-    })
+    });
+
+    if (localStorage['explore:betterHomepage'] == 'true') {
+        addHrefChangeEvent(() => {
+            addStyle(`
+                #carousel-banner { opacity: 0;  }
+                .home_bgColor_Ffb4T, .home_bgUndefpainting_1oUZ1 .container > div:first-child { background-image: none !important; }
+                .home_bgColor_Ffb4T i.project-featured { color: #4c97ff }
+                .home_padding_2Bomd i.project-hot { color: indianred }
+            `);
+        })
+        addFindElement(`#carousel-banner`, () => {
+            $('#carousel-banner')[0].innerHTML = `
+                <div class="card_wrapper_2Sod3 project-card_wrapper_nRmEY card_vertical_1XmvA new-home-carousel">
+                    <div style="
+                        position: absolute;
+                        left: 0;
+                        bottom: 0;
+                        padding: 1.5em;
+                    ">
+                        <div style="
+                            font-size: 1.5em;
+                            font-weight: 600;
+                        ">欢迎回到${Blockey.DOMAIN.name == 'gitblock.cn' ? '稽木世界' : '阿儿法营'}！</div>
+                        <div>现在是 <span class="new-home-time">2024-03-02 22:20</span></div>
+                    </div>
+                </div>
+                <div class="card_wrapper_2Sod3 project-card_wrapper_nRmEY card_vertical_1XmvA new-home-console">
+                    <a class="username"></a>
+                    <button class="btn btn-primary ${ !Blockey?.INIT_DATA?.loggedInUser && 'disabled'}" onclick="window.openRobotCheckIn()">签到</button>
+                </div>
+            `;
+            addStyle(`
+                #carousel-banner {
+                    padding-top: 2em;
+                    display: flex;
+                    gap: 1em;
+                    opacity: 1 !important;
+                }
+                @media screen and (max-width: 768px) {
+                    #carousel-banner {
+                        padding: 0 1em;
+                        padding-top: 2em;
+                    }
+                }
+                .new-home-carousel {
+                    width: 100%;
+                    background: url(https://cdn.gitblock.cn/Media?name=1ED99762F0EBB6B482B5F0BB4A20564E.png);
+                    background-position: center;
+                    background-size: contain;
+                }
+                .new-home-console {
+                    padding: 2em;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.2em;
+                    align-items: center;
+                    height: 10em;
+                    justify-content: space-between;
+                    min-width: 10em;
+                }
+                @media screen and (max-width: 480px) {
+                    .new-home-carousel {
+                        display: none;
+                    } 
+                    .new-home-console {
+                        width: 100%;
+                        margin: 0 1em;
+                    }
+                }
+                .new-home-console .username {
+                    font-size: 1.5em;
+                    font-weight: 600;
+                    text-wrap: nowrap;
+                    margin-bottom: 0.5em;
+                    line-height: 1em;
+                    color: #000;
+                    text-decoration: none;
+                }
+                .new-home-console .btn {
+                    width: 100%;
+                }
+                .new-home-console .date {
+                    text-wrap: nowrap;
+                    line-height: 1em;
+                    margin-top: 0.5em;
+                    font-size: 0.9em;
+                    opacity: 0.5;
+                }
+                .new-home-carousel[time="night"] {
+                    color: #fff;
+                    background: linear-gradient(#1a237ecc, #283593cc);
+                }
+                .new-home-carousel[time="sunrise_sunset"] {
+                    color: #000;
+                    background: linear-gradient(#fff3e080, #ffe0b280);
+                }
+                .new-home-carousel[time="day"] {
+                    color: #000;
+                    background: linear-gradient(#bbdefb60, #e3f2fd80);
+                }
+                .new-home-time {
+                    font-weight: 600;
+                }
+            `);
+            // 设置 carousel 颜色
+            let hours = new Date().getHours() + new Date().getMinutes() / 60,
+                months = new Date().getMonth() + new Date().getDate() / 31;
+            let sunset = ((x) => 1.75 * Math.sin(0.4 * x - 1.06) + 18.1)(months),
+                sunrise = ((x) => -1.9 * Math.sin(0.4 * x - 1.07) + 6.6)(months);
+            let time;
+            if (hours < sunrise - 0.25 || hours > sunset + 0.25) time = "night";
+            else if (hours > sunrise + 1 && hours < sunset - 1) time = "day";
+            else time = "sunrise_sunset";
+            $('.new-home-carousel')[0].setAttribute('time', time);
+            // 设置信息显示
+            $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
+            setInterval(() => {
+                if($('.new-home-time').length) $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
+            }, 500);
+            $('.new-home-console .username')[0].innerText = Blockey?.INIT_DATA?.loggedInUser?.username || '未登录';
+            Blockey?.INIT_DATA?.loggedInUser && ($('.new-home-console .username')[0].href = '/Users/' + Blockey.INIT_DATA.loggedInUser.id);
+        });
+
+        window.openRobotCheckIn = () => {
+            localStorage['openRobotCheckInKey'] = Math.random();
+            Blockey.Utils.confirm('签到');
+            let interval = setInterval(() => {
+                if ($('.body.box_box_tWy-0').length) {
+                    $('.body.box_box_tWy-0')[0].innerHTML = '';
+                    $('.body.box_box_tWy-0')[0].style.padding = '0';
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '30em';
+                    iframe.src = '/Users/1068072/My/Items?openRobotCheckIn' + localStorage['openRobotCheckInKey'];
+                    $('.body.box_box_tWy-0')[0].append(iframe);
+                    clearInterval(interval);
+                }
+            });
+        }
+
+        if (location.search === '?openRobotCheckIn' + localStorage['openRobotCheckInKey']) {
+            addStyle(`
+                *::-webkit-scrollbar {
+                    display: none; /* Chrome Safari */
+                }
+
+                * {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+
+                body.invisible * {
+                    opacity: 1;
+                }
+            `);
+            document.body.classList.add('invisible');
+            window.scroll(0, 10000);
+            addFindElement('.bag-item-card_wrapper_OhZLu img[src="https://cdn.gitblock.cn/Media?name=36C146F13109C252144317DFF64AABAE.svg"]', (t) => {
+                document.body.classList.remove(['invisible']);
+                addStyle(`
+                    .body.box_box_tWy-0 {
+                        position: fixed;
+                        left: 0;
+                        top: 0;
+                        height: 100%;
+                        width: 100%;
+                        max-height: 100% !important;
+                        z-index: 100;
+                    }
+                `);
+                t.click();
+            });
+        }
+    }
     // Your code here...
 })();

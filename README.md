@@ -86,7 +86,9 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 22. 提示评论发出后可能会处于仅好友可见状态
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/仅好友可见提示.png" style="width: 20em"/>
-22. 增加前往新闻公告原帖的按钮
+23. 增加前往新闻公告原帖的按钮
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/前往新闻公告的原帖.png" style="width: 20em"/>
+24. 更好的主页
 
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/更好的主页.png" style="width: 20em"/>
