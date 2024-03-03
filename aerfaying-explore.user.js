@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.17.0
+// @version      1.17.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.17.0';
+    const version = '1.17.1';
 
     if (location.search === '?NoUserscript') return;
 
@@ -2419,7 +2419,7 @@
             a, a:hover, a:active, a:focus, a.black:hover, a.black:active, .pagination>li>a:focus, .pagination>li>a:hover, .pagination>li>span:focus, .pagination>li>span:hover {
                 color: ${mainColorRGB(1.2)};
             }
-            .color-primary, .pagination > li > a, .pagination > li > span {
+            .color-primary, .btn-transparent:hover, .pagination > li > a, .pagination > li > span {
                 color: ${mainColor()};
             }
             .stat-graph_day-1_3GeeK {
@@ -2449,11 +2449,12 @@
                 ['76, 151, 255', mainColorRGBValue()],
                 ['77,151,255', mainColorRGBValue()],
                 ['77, 151, 255', mainColorRGBValue()],
-                ['#82d900', secondColor()],
                 ['#70ba00', secondColor(0.8)],
                 ['137,203,36', secondColorRGBValue()]
             ];
             let styleText = styles.innerHTML;
+            // 跳过 scratch-blocks 样式
+            if (styleText.includes('.sb-obsolete') || styleText.includes('.sb3-events')) return;
             colorReplace.forEach(color => {
                 styleText = styleText.replaceAll(color[0], color[1]);
             });
