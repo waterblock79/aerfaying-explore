@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.17.1
+// @version      1.17.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.17.1';
+    const version = '1.17.2';
 
     if (location.search === '?NoUserscript') return;
 
@@ -291,7 +291,12 @@
         text: '自定义主题色',
         type: 'check',
         default: false,
-        desp: '<a onclick="window.openThemeSettingModel()">前往设置颜色</a>'
+        desp: '<a onclick="window.openThemeSettingModal()">前往设置颜色</a>'
+    }, {
+        tag: 'explore:modalBackgroundBlur',
+        text: '对话框背景虚化',
+        type: 'check',
+        default: true
     }
     ];
     
@@ -2251,7 +2256,7 @@
         window.openRobotCheckIn = () => {
             // 为避免潜在的风险，打开内嵌签到页面需要动态生成的 Key
             localStorage['openRobotCheckInKey'] = Math.random();
-            // 实现签到 Model
+            // 实现签到 modal
             Blockey.Utils.confirm('签到');
             let interval = setInterval(() => {
                 if ($('.body.box_box_tWy-0').length) {
@@ -2335,7 +2340,7 @@
     })
 
     // 设置主题色
-    window.openThemeSettingModel = () => {
+    window.openThemeSettingModal = () => {
         addStyle(`
             .explore-set-themeColor {       
                 display: flex;
@@ -2470,5 +2475,12 @@
     addFindElement(`.stat-graph_day-2_WowYZ`, e => e.title = '等级 2 / 4');
     addFindElement(`.stat-graph_day-3_36etr`, e => e.title = '等级 3 / 4');
     addFindElement(`.stat-graph_day-4_3XS42`, e => e.title = '等级 4 / 4');
+
+    // Modal 背景模糊
+    (localStorage['explore:modalBackgroundBlur'] == 'true') && addStyle(`
+        .ReactModal__Overlay {
+            backdrop-filter: blur(6px);
+        }
+    `);
     // Your code here...
 })();
