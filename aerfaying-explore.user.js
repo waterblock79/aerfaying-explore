@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.16.3
+// @version      1.17.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.16.3';
+    const version = '1.17.0';
 
     if (location.search === '?NoUserscript') return;
 
@@ -105,7 +105,7 @@
     setInterval(() => {
         // addFindElement
         findElement.forEach((item) => {
-            $(item.selector).forEach((element) => {
+            $(item.selector)?.forEach((element) => {
                 if (!item.handledElements.find(e => e == element)) {
                     item.handledElements.push(element);
                     (async () => { item.callback(element) })();
@@ -114,7 +114,7 @@
         })
         // addSelectorEvent
         eventElement.forEach((item) => {
-            $(item.selector).forEach((element) => {
+            $(item.selector)?.forEach((element) => {
                 if (!item.handledElements.find(e => e == element)) {
                     element.addEventListener(item.event, item.callback);
                     item.handledElements.push(element);
@@ -282,18 +282,42 @@
         default: true
     }, {
         tag: 'explore:betterHomepage',
-        text: '优化主页样式、提供实用功能',
+        text: '优化主页',
         type: 'check',
         default: false,
-        desp: '这是一个实验性功能，请谨慎使用'
+        desp: '优化了主页的样式、提供了实用功能。'
+    }, {
+        tag: 'explore:customThemeColor',
+        text: '自定义主题色',
+        type: 'check',
+        default: false,
+        desp: '<a onclick="window.openThemeSettingModel()">前往设置颜色</a>'
     }
     ];
+    
+    // 欢迎
+    if (localStorage['explore:commentVisibilityPredict'] == undefined) {
+        let interval = setInterval(() => {
+            if ($('.footer').length) {
+                $('.footer')[0].style.display = 'none';
+                clearInterval(interval);
+            }
+        });
+        Blockey.Utils.confirm(`欢迎使用 Aerfaying-Explore`, `
+            <b>嗨${Blockey.Utils.getLoggedInUser() ? `，${Blockey.Utils.getLoggedInUser().username}` : ''}！欢迎使用 Aerfaying-Explore 插件！</b><br/>
+            - 当您看到这条消息时说明您已经成功地安装了这个插件，希望这个插件能有效地提升您的社区探索体验！<br/>
+            - 大部分拓展功能默认是关闭的，您可以在 <a onclick="$('#nav-explore-setting')[0].click()">插件设置</a> 中选择启用或关闭插件功能。<br/>
+            - 如果您有功能建议或者遇到了 Bug，欢迎在 <a href="https://github.com/waterblock79/aerfaying-explore">Github</a> 或 <a href="/Users/1068072">作者的主页</a> 反馈~
+        `); 
+    }
+
     // 设置默认值
     settings.forEach((item) => {
         if (!localStorage[item.tag]) {
             localStorage[item.tag] = item.default;
         }
-    })
+    });
+    
     // 创建设置摁钮
     let settingsButton = document.createElement('li');
     settingsButton.innerHTML = '<a id="nav-explore-setting"><span>插件设置</span></a>';
@@ -1979,7 +2003,7 @@
                             <td 
                                 style="text-wrap: nowrap"
                             >
-                                ${Blockey.Utils.formatDateString(new Date(vote.createTime),'yyyy-MM-dd')}
+                                ${Blockey.Utils.formatDateString(new Date(vote.createTime), 'yyyy-MM-dd')}
                             </td>
                             <td>${Number(vote.scoreCreative)}</td>
                             <td>${Number(vote.scoreArts)}</td>
@@ -2115,7 +2139,7 @@
                 </div>
                 <div class="card_wrapper_2Sod3 project-card_wrapper_nRmEY card_vertical_1XmvA new-home-console">
                     <a class="username"></a>
-                    <button class="btn btn-primary ${ !Blockey?.INIT_DATA?.loggedInUser && 'disabled'} new-home-checkInBtn" onclick="window.openRobotCheckIn()">签到</button>
+                    <button class="btn btn-primary ${!Blockey?.INIT_DATA?.loggedInUser && 'disabled'} new-home-checkInBtn" onclick="window.openRobotCheckIn()">签到</button>
                 </div>
             `;
             addStyle(`
@@ -2205,17 +2229,19 @@
             // 显示时间
             $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
             setInterval(() => {
-                if($('.new-home-time').length) $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
+                if ($('.new-home-time').length) $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
             }, 500);
             // 显示登陆状态
             $('.new-home-console .username')[0].innerText = Blockey.INIT_DATA?.loggedInUser?.username || '未登录';
-            setInterval(() => {
+            let interval = setInterval(() => {
                 if ($('.new-home-console .username').length && $('.new-home-checkInBtn').length) {
-                    $('.new-home-console .username')[0].innerText = Blockey.Utils.getLoggedInUser()?.username || '未登录';
-                    Blockey.Utils.getLoggedInUser() && ($('.new-home-console .username')[0].href = '/Users/' + Blockey.Utils.getLoggedInUser().id);
-                    // 设置签到按钮禁用与否
                     if (Blockey.Utils.getLoggedInUser() && $('.new-home-checkInBtn')[0].classList.contains('disabled')) {
+                        // 设置登陆状态
+                        $('.new-home-console .username')[0].innerText = Blockey.Utils.getLoggedInUser()?.username || '未登录';
+                        Blockey.Utils.getLoggedInUser() && ($('.new-home-console .username')[0].href = '/Users/' + Blockey.Utils.getLoggedInUser().id);
+                        // 设置签到按钮禁用与否
                         $('.new-home-checkInBtn')[0].classList.remove(['disabled']);
+                        clearInterval(interval);
                     }
                 }
             }, 200);
@@ -2284,7 +2310,7 @@
             addFindElement('a', a => a.target = '_blank');
         }
     };
-    
+
     // 在签到机器人处提醒用户可以完成“键盘超人之ABC”任务获得额外的奖励
     addFindElement(`.robot-checkin-modal_card_25wO8`, (element) => {
         // 创建提示并把提示加入页面
@@ -2305,8 +2331,143 @@
         }
         (localStorage['explore:checkInTips'] != 'old') ? showNewTip() : showOldTips();
         ul.children.item(0).addEventListener('click', showNewTip);
-        tip.addEventListener('click', showOldTips);
+        tip.addEventListener('click', event => {event.target == tip && showOldTips()});
     })
 
+    // 设置主题色
+    window.openThemeSettingModel = () => {
+        addStyle(`
+            .explore-set-themeColor {       
+                display: flex;
+                gap: 1em;
+                align-items: center;
+                font-weight: 600;
+            }
+        `)
+        Blockey.Utils.confirm('设置主题色', `
+            <div style="
+                display: flex;
+                justify-content: center;
+                flex-direction: column;
+                align-items: center;
+            ">
+                <div class="explore-set-themeColor">
+                    主颜色
+                    <input type="color" id="mainColor" value="${localStorage['explore:mainColor']}" onchange="localStorage['explore:mainColor'] = event.target.value; applyThemeColor();">
+                </div>
+                <div class="explore-set-themeColor" style="margin: 0.5em 0">
+                    副颜色
+                    <input type="color" id="secondColor" value="${localStorage['explore:secondColor']}" onchange="localStorage['explore:secondColor'] = event.target.value; applyThemeColor();">
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="
+                    localStorage['explore:mainColor'] = '#00897B';
+                    localStorage['explore:secondColor'] = '#4CAF50';
+                    applyThemeColor();
+                    document.querySelector('#mainColor').value = '#00897B';
+                    document.querySelector('#secondColor').value = '#4CAF50';
+                ">恢复默认值</button>
+            </div>
+        `);
+        let interval = setInterval(() => {
+            if ($('.footer').length) {
+                $('.footer')[0].style.display = 'none';
+                clearInterval(interval);
+            }
+        });
+    }
+    // 设置默认主题色
+    if (!localStorage['explore:mainColor']) localStorage['explore:mainColor'] = '#00897B';
+    if (!localStorage['explore:secondColor']) localStorage['explore:secondColor'] = '#4CAF50';
+    // 应用主题色函数
+    window.applyThemeColor = () => {
+        // mainColor: "#008080", mainColorRGBValue: "0, 128, 128", mainColorRGB: "rgb(0, 128, 128, 1)"
+        // 主颜色（原来是蓝色）
+        const mainColor = () => localStorage['explore:mainColor'],
+            mainColorRGBValue = (lightness = 1) => `${Number.parseInt(mainColor().slice(1, 3), 16) * lightness}, ${Number.parseInt(mainColor().slice(3, 5), 16) * lightness}, ${Number.parseInt(mainColor().slice(5, 7), 16) * lightness}`,
+            mainColorRGB = (lightness = 1, alpha = 1) => `rgb(${mainColorRGBValue(lightness = 1)}, ${alpha})`;
+        // 副颜色（原来是绿色）
+        const secondColor = () => localStorage['explore:secondColor'],
+            secondColorRGBValue = (lightness = 1) => `${Number.parseInt(secondColor().slice(1, 3), 16) * lightness}, ${Number.parseInt(secondColor().slice(3, 5), 16) * lightness}, ${Number.parseInt(secondColor().slice(5, 7), 16) * lightness}`;
+        // 应用样式替换颜色
+        addStyle(`
+            .btn.btn-primary, .panel2_border_2Slyp, .pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
+                background: ${mainColor()} !important;
+                border: 1px solid ${mainColor()} !important;
+            }
+            .btn.btn-submit, .progress_progress_Gm5t- {
+                background: ${secondColor()} !important;
+                border: 1px solid ${secondColor()} !important;
+            }
+            .form-control:focus {
+                border: 1px solid ${mainColor()} !important;
+                box-shadow: 0 0 0 3px ${mainColorRGB(1, 0.4)};
+            }
+            .btn-outline-primary {
+                border-color: ${mainColor()} !important;
+                color: ${mainColor()} !important;
+            }
+            .btn-outline-primary:hover {
+                background-color: ${mainColor()} !important;
+                color: #fff;
+            }
+            .modal_modal-overlay_2_Dgx {
+                background-color: ${mainColorRGB(1, 0.9)} !important;
+            }
+            .modal_header_1dNxf {
+                background-color: ${mainColorRGB()} !important;
+            }
+            a, a:hover, a:active, a:focus, a.black:hover, a.black:active, .pagination>li>a:focus, .pagination>li>a:hover, .pagination>li>span:focus, .pagination>li>span:hover {
+                color: ${mainColorRGB(1.2)};
+            }
+            .color-primary, .pagination > li > a, .pagination > li > span {
+                color: ${mainColor()};
+            }
+            .stat-graph_day-1_3GeeK {
+                background-color: ${mainColorRGB(1.1, 0.4)} !important;
+            }
+            .stat-graph_day-2_WowYZ {
+                background-color: ${mainColorRGB(0.8, 0.6)} !important;
+            }
+            .stat-graph_day-3_36etr {
+                background-color: ${mainColorRGB(0.4, 0.8)} !important;
+            }
+            .stat-graph_day-4_3XS42 {
+                background-color: ${mainColorRGB(0.1, 1)} !important;
+            }
+            .new-home-carousel {
+                background: ${mainColor()} !important;
+                color: #fff !important;
+            }
+        `);
+        // 替换 style 中的颜色
+        addFindElement('style', styles => {
+            const colorReplace = [
+                ['#4c97ff', mainColor()],
+                ['#4d97ff', mainColorRGB(1.05)],
+                ['#4280d9', mainColorRGB(1.2)],
+                ['76,151,255', mainColorRGBValue()],
+                ['76, 151, 255', mainColorRGBValue()],
+                ['77,151,255', mainColorRGBValue()],
+                ['77, 151, 255', mainColorRGBValue()],
+                ['#82d900', secondColor()],
+                ['#70ba00', secondColor(0.8)],
+                ['137,203,36', secondColorRGBValue()]
+            ];
+            let styleText = styles.innerHTML;
+            colorReplace.forEach(color => {
+                styleText = styleText.replaceAll(color[0], color[1]);
+            });
+            styles.innerHTML = styleText;
+        });
+    };
+    // 应用自定义主题色
+    (localStorage['explore:customThemeColor'] == 'true') && applyThemeColor();
+
+    // 查看活跃度等级值
+    addFindElement(`.stat-graph_day-0_idJxi`, e => e.title = '等级 0 / 4');
+    addFindElement(`.stat-graph_day-1_3GeeK`, e => e.title = '等级 1 / 4');
+    addFindElement(`.stat-graph_day-2_WowYZ`, e => e.title = '等级 2 / 4');
+    addFindElement(`.stat-graph_day-3_36etr`, e => e.title = '等级 3 / 4');
+    addFindElement(`.stat-graph_day-4_3XS42`, e => e.title = '等级 4 / 4');
     // Your code here...
 })();
