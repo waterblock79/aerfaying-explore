@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.16.0
+// @version      1.16.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.16.0';
+    const version = '1.16.1';
 
     if (location.search === '?NoUserscript') return;
 
@@ -2218,7 +2218,7 @@
                     const iframe = document.createElement('iframe');
                     iframe.style.width = '100%';
                     iframe.style.height = '30em';
-                    iframe.src = '/Users/1068072/My/Items?openRobotCheckIn' + localStorage['openRobotCheckInKey'];
+                    iframe.src = `/Users/${Blockey.INIT_DATA.loggedInUser.id}/My/Items?openRobotCheckIn` + localStorage['openRobotCheckInKey'];
                     $('.body.box_box_tWy-0')[0].append(iframe);
                     clearInterval(interval);
                 }
@@ -2257,6 +2257,7 @@
                 `);
                 t.click();
             });
+            addFindElement('a', a => a.target = '_blank');
         }
     }
     // Your code here...
