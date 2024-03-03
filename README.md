@@ -89,6 +89,6 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 23. 增加前往新闻公告原帖的按钮
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/前往新闻公告的原帖.png" style="width: 20em"/>
-24. 更好的主页
+24. 主页优化
 
-    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/更好的主页.png" style="width: 20em"/>
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/主页优化.png" style="width: 20em"/>

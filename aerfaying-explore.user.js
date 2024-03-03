@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.16.2
+// @version      1.16.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.16.2';
+    const version = '1.16.3';
 
     if (location.search === '?NoUserscript') return;
 
@@ -282,7 +282,7 @@
         default: true
     }, {
         tag: 'explore:betterHomepage',
-        text: '更好的主页',
+        text: '优化主页样式、提供实用功能',
         type: 'check',
         default: false,
         desp: '这是一个实验性功能，请谨慎使用'
@@ -2086,7 +2086,7 @@
         }
     });
 
-    // 更好的主页
+    // 主页优化
     if (localStorage['explore:betterHomepage'] == 'true') {
         addHrefChangeEvent(() => {
             addStyle(`
@@ -2275,6 +2275,7 @@
                         width: 100%;
                         max-height: 100% !important;
                         z-index: 100;
+                        padding: 2em !important;
                     }
                 `);
                 t.click();
@@ -2282,6 +2283,30 @@
             // 在新标签页中打开（谜题）链接
             addFindElement('a', a => a.target = '_blank');
         }
-    }
+    };
+    
+    // 在签到机器人处提醒用户可以完成“键盘超人之ABC”任务获得额外的奖励
+    addFindElement(`.robot-checkin-modal_card_25wO8`, (element) => {
+        // 创建提示并把提示加入页面
+        const ul = element.parentNode.querySelector('.tips_tips_BetGP > ul');
+        const tip = document.createElement('li');
+        tip.innerHTML = `每天完成 <a href="/Missions/20306/View">键盘超人之ABC</a> 任务还能获得最多 32 金币和 8 经验喔！`;
+        ul.append(tip);
+        // 切换提示
+        const showNewTip = () => {
+            ul.children.item(0).style.display = 'none';
+            tip.style.display = 'list-item';
+            localStorage['explore:checkInTips'] = 'new';
+        };
+        const showOldTips = () => {
+            tip.style.display = 'none';
+            ul.children.item(0).style.display = 'list-item';
+            localStorage['explore:checkInTips'] = 'old';
+        }
+        (localStorage['explore:checkInTips'] != 'old') ? showNewTip() : showOldTips();
+        ul.children.item(0).addEventListener('click', showNewTip);
+        tip.addEventListener('click', showOldTips);
+    })
+
     // Your code here...
 })();
