@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.16.1
+// @version      1.16.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.16.1';
+    const version = '1.16.2';
 
     if (location.search === '?NoUserscript') return;
 
@@ -2086,6 +2086,7 @@
         }
     });
 
+    // 更好的主页
     if (localStorage['explore:betterHomepage'] == 'true') {
         addHrefChangeEvent(() => {
             addStyle(`
@@ -2096,6 +2097,7 @@
             `);
         })
         addFindElement(`#carousel-banner`, () => {
+            // 替换轮播
             $('#carousel-banner')[0].innerHTML = `
                 <div class="card_wrapper_2Sod3 project-card_wrapper_nRmEY card_vertical_1XmvA new-home-carousel">
                     <div style="
@@ -2113,7 +2115,7 @@
                 </div>
                 <div class="card_wrapper_2Sod3 project-card_wrapper_nRmEY card_vertical_1XmvA new-home-console">
                     <a class="username"></a>
-                    <button class="btn btn-primary ${ !Blockey?.INIT_DATA?.loggedInUser && 'disabled'}" onclick="window.openRobotCheckIn()">签到</button>
+                    <button class="btn btn-primary ${ !Blockey?.INIT_DATA?.loggedInUser && 'disabled'} new-home-checkInBtn" onclick="window.openRobotCheckIn()">签到</button>
                 </div>
             `;
             addStyle(`
@@ -2200,50 +2202,70 @@
             else time = "sunrise_sunset";
             $('.new-home-carousel')[0].setAttribute('time', time);
             // 设置信息显示
+            // 显示时间
             $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
             setInterval(() => {
                 if($('.new-home-time').length) $('.new-home-time')[0].innerText = Blockey.Utils.formatDate(new Date());
             }, 500);
-            $('.new-home-console .username')[0].innerText = Blockey?.INIT_DATA?.loggedInUser?.username || '未登录';
-            Blockey?.INIT_DATA?.loggedInUser && ($('.new-home-console .username')[0].href = '/Users/' + Blockey.INIT_DATA.loggedInUser.id);
+            // 显示登陆状态
+            $('.new-home-console .username')[0].innerText = Blockey.INIT_DATA?.loggedInUser?.username || '未登录';
+            setInterval(() => {
+                if ($('.new-home-console .username').length && $('.new-home-checkInBtn').length) {
+                    $('.new-home-console .username')[0].innerText = Blockey.Utils.getLoggedInUser()?.username || '未登录';
+                    Blockey.Utils.getLoggedInUser() && ($('.new-home-console .username')[0].href = '/Users/' + Blockey.Utils.getLoggedInUser().id);
+                    // 设置签到按钮禁用与否
+                    if (Blockey.Utils.getLoggedInUser() && $('.new-home-checkInBtn')[0].classList.contains('disabled')) {
+                        $('.new-home-checkInBtn')[0].classList.remove(['disabled']);
+                    }
+                }
+            }, 200);
         });
 
+        // 实现内嵌签到页面
         window.openRobotCheckIn = () => {
+            // 为避免潜在的风险，打开内嵌签到页面需要动态生成的 Key
             localStorage['openRobotCheckInKey'] = Math.random();
+            // 实现签到 Model
             Blockey.Utils.confirm('签到');
             let interval = setInterval(() => {
                 if ($('.body.box_box_tWy-0').length) {
+                    // 清空 confirm 内原来的内容
                     $('.body.box_box_tWy-0')[0].innerHTML = '';
                     $('.body.box_box_tWy-0')[0].style.padding = '0';
+                    // 嵌入 iframe
                     const iframe = document.createElement('iframe');
                     iframe.style.width = '100%';
                     iframe.style.height = '30em';
-                    iframe.src = `/Users/${Blockey.INIT_DATA.loggedInUser.id}/My/Items?openRobotCheckIn` + localStorage['openRobotCheckInKey'];
+                    iframe.src = `/Users/${Blockey.Utils.getLoggedInUser().id}/My/Items?openRobotCheckIn` + localStorage['openRobotCheckInKey'];
                     $('.body.box_box_tWy-0')[0].append(iframe);
                     clearInterval(interval);
                 }
             });
         }
 
+        // 实现签到组件
         if (location.search === '?openRobotCheckIn' + localStorage['openRobotCheckInKey']) {
+            // 隐藏滚动条、并在加载完毕前隐身所有内容
             addStyle(`
                 *::-webkit-scrollbar {
                     display: none; /* Chrome Safari */
                 }
-
                 * {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
                 }
-
                 body.invisible * {
                     opacity: 1;
                 }
             `);
             document.body.classList.add('invisible');
+            // 似乎有懒加载，这里滚动到最底下以使得签到机器人的按钮能被加载出来
             window.scroll(0, 10000);
+            // 寻找签到机器人按钮并点击
             addFindElement('.bag-item-card_wrapper_OhZLu img[src="https://cdn.gitblock.cn/Media?name=36C146F13109C252144317DFF64AABAE.svg"]', (t) => {
+                // 使内容重新可见
                 document.body.classList.remove(['invisible']);
+                // 全屏签到组件 CSS
                 addStyle(`
                     .body.box_box_tWy-0 {
                         position: fixed;
@@ -2257,6 +2279,7 @@
                 `);
                 t.click();
             });
+            // 在新标签页中打开（谜题）链接
             addFindElement('a', a => a.target = '_blank');
         }
     }
