@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.17.3
+// @version      1.17.4
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.17.3';
+    const version = '1.17.4';
 
     if (location.search === '?NoUserscript') return;
 
@@ -2389,10 +2389,17 @@
         // 主颜色（原来是蓝色）
         const mainColor = () => localStorage['explore:mainColor'],
             mainColorRGBValue = (lightness = 1) => `${Number.parseInt(mainColor().slice(1, 3), 16) * lightness}, ${Number.parseInt(mainColor().slice(3, 5), 16) * lightness}, ${Number.parseInt(mainColor().slice(5, 7), 16) * lightness}`,
-            mainColorRGB = (lightness = 1, alpha = 1) => `rgb(${mainColorRGBValue(lightness = 1)}, ${alpha})`;
+            mainColorRGB = (lightness = 1, alpha = 1) => `rgb(${mainColorRGBValue(lightness)}, ${alpha})`;
         // 副颜色（原来是绿色）
         const secondColor = () => localStorage['explore:secondColor'],
             secondColorRGBValue = (lightness = 1) => `${Number.parseInt(secondColor().slice(1, 3), 16) * lightness}, ${Number.parseInt(secondColor().slice(3, 5), 16) * lightness}, ${Number.parseInt(secondColor().slice(5, 7), 16) * lightness}`;
+        if (
+            !(mainColor().match(/#[0-9A-Fa-f]{6}/g)) || mainColor().length != 7 ||
+            !(secondColor().match(/#[0-9A-Fa-f]{6}/g)) || secondColor().length != 7
+        ) {
+            console.log('主题色设置错误！');
+            return;
+        }
         // 应用样式替换颜色
         addStyle(`
             .btn.btn-primary, .panel2_border_2Slyp, .pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
@@ -2449,13 +2456,15 @@
             const colorReplace = [
                 ['#4c97ff', mainColor()],
                 ['#4d97ff', mainColorRGB(1.05)],
-                ['#4280d9', mainColorRGB(1.2)],
+                ['#4280d9', mainColorRGB(0.85)],
+                ['#4f82d3', mainColor()],
                 ['76,151,255', mainColorRGBValue()],
                 ['76, 151, 255', mainColorRGBValue()],
                 ['77,151,255', mainColorRGBValue()],
                 ['77, 151, 255', mainColorRGBValue()],
                 ['#70ba00', secondColor(0.8)],
-                ['137,203,36', secondColorRGBValue()]
+                ['137,203,36', secondColorRGBValue()],
+                ['#e5f0ff', mainColorRGB(1, 0.1)]
             ];
             let styleText = styles.innerHTML;
             // 跳过 scratch-blocks 样式
