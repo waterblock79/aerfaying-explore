@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.17.4
+// @version      1.18.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,9 +32,11 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.17.4';
+    const version = '1.18.0';
 
     if (location.search === '?NoUserscript') return;
+
+    window.aerfayingExplore = {};
 
     // 判断 GM_setValue、GM_getValue 是否可用（貌似不存在的话，获取就报错，不能像 foo == undefined 那样获取它是否存在）
     try {
@@ -299,7 +301,7 @@
         default: true
     }
     ];
-    
+
     // 欢迎
     if (localStorage['explore:commentVisibilityPredict'] == undefined) {
         let interval = setInterval(() => {
@@ -313,7 +315,7 @@
             - 当您看到这条消息时说明您已经成功地安装了这个插件，希望这个插件能有效地提升您的社区探索体验！<br/>
             - 大部分拓展功能默认是关闭的，您可以在 <a onclick="$('#nav-explore-setting')[0].click()">插件设置</a> 中选择启用或关闭插件功能。<br/>
             - 如果您有功能建议或者遇到了 Bug，欢迎在 <a href="https://github.com/waterblock79/aerfaying-explore">Github</a> 或 <a href="/Users/1068072">作者的主页</a> 反馈~
-        `); 
+        `);
     }
 
     // 设置默认值
@@ -322,7 +324,7 @@
             localStorage[item.tag] = item.default;
         }
     });
-    
+
     // 创建设置摁钮
     let settingsButton = document.createElement('li');
     settingsButton.innerHTML = '<a id="nav-explore-setting"><span>插件设置</span></a>';
@@ -436,6 +438,55 @@
                 </select>
             </div>
         `;
+        // 导出和导入配置
+        html += `
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 1em 0;
+            ">
+                <div style="margin: 0.3em 0">
+                    <b style="display: block">配置</b>
+                </div>
+                <div>
+                    <a onclick="window.aerfayingExplore.importConfig()">导入</a> /
+                    <a onclick="window.aerfayingExplore.exportConfig()">导出</a>
+                </div>
+            </div>
+        `;
+        window.aerfayingExplore.exportConfig = async () => {
+            let exportData = {};
+            settings.forEach((item) => {
+                exportData[item.tag] = localStorage[item.tag];
+            });
+            exportData['explore:remark'] = localStorage['explore:remark'];
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(exportData));
+                Blockey.Utils.Alerter.info('已复制到剪贴板');
+            } catch (e) {
+                console.log(e);
+                Blockey.Utils.Alerter.info('复制到剪贴板失败');
+            }
+        };
+        window.aerfayingExplore.importConfig = () => {
+            Blockey.Utils.prompt('导入配置').then((data) => {
+                try {
+                    let importData = JSON.parse(data);
+                    settings.forEach((item) => {
+                        if (item.type === 'radio' && Number.isInteger(Number(importData[item.tag])) || item.type === 'check' && ['true', 'false'].includes(importData[item.tag])) {
+                            localStorage[item.tag] = importData[item.tag];
+                        } else {
+                            throw Error(`${item.tag} 在类型 ${item.type} 下错误的值 ${importData[item.tag]}`)
+                        }
+                    });
+                    importData['explore:remark'] && (localStorage['explore:remark'] = JSON.stringify(JSON.parse(importData['explore:remark'])));
+                    location.reload();
+                } catch (e) {
+                    Blockey.Utils.Alerter.info(`配置存在错误！${e}`);
+                }
+            });
+        }
         // 设置的尾部显示开源地址、版本
         html += `<hr/>`;
         html += `
@@ -2336,7 +2387,7 @@
         }
         (localStorage['explore:checkInTips'] != 'old') ? showNewTip() : showOldTips();
         ul.children.item(0).addEventListener('click', showNewTip);
-        tip.addEventListener('click', event => {event.target == tip && showOldTips()});
+        tip.addEventListener('click', event => { event.target == tip && showOldTips() });
     })
 
     // 设置主题色
