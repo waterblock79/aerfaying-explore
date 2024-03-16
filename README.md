@@ -95,3 +95,7 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 25. 自定义主题色
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/自定义主题色.png" style="width: 20em"/>
+25. 自定义样式
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/自定义样式.png" style="width: 20em"/>
+

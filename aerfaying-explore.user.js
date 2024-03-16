@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.18.0
+// @version      1.19.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.18.0';
+    const version = '1.19.0';
 
     if (location.search === '?NoUserscript') return;
 
@@ -469,6 +469,63 @@
                 Blockey.Utils.Alerter.info('复制到剪贴板失败');
             }
         };
+        // 自定义样式
+        html += `
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 1em 0;
+            ">
+                <div style="margin: 0.3em 0">
+                    <b style="display: block">自定义样式</b>
+                    <small>自定义字体、隐藏元素...</small>
+                </div>
+                <a onclick="window.openCustomStyle()">设置</a>
+            </div>
+        `;
+        window.openCustomStyle = () => {
+            Blockey.Utils.confirm('自定义样式', `
+                <div style="
+                    gap: 1em;
+                    display: flex;
+                    flex-direction: column;
+                    margin-bottom: 1em;
+                ">
+                    <b>设置自定义字体</b>
+                    <input type="text" class="form-control customFont" placeholder="自定义字体名称" onChange="window.setCustomStyle('font', event.target.value)">
+                    
+                    <div>
+                        <b>引入自定义 CSS 文件</b>
+                        <small>添加自定义 CSS 文件前请确保您了解这个文件的内容和用途。</small>
+                    </div>
+                    <input type="text" class="form-control customCSSFile" placeholder="自定义 CSS 文件地址" onChange="window.setCustomStyle('cssFile', event.target.value)">
+
+                    <div>
+                        <b>自定 CSS</b>
+                        <small>请确保您理解您所输入的 CSS 代码。</small>
+                    </div>
+                    <textarea 
+                        class="form-control customCSS"
+                        placeholder="自定义 CSS"
+                        style="resize: vertical;"
+                        onChange="window.setCustomStyle('css', event.target.value)"
+                    ></textarea>
+                </div>
+            `);
+            window.setCustomStyle = (name, value) => {
+                if (name == 'cssFile') {
+                    localStorage['explore:customCSSFile'] = value;
+                } else if (name == 'font') {
+                    localStorage['explore:customFont'] = value;
+                } else if (name == 'css') {
+                    localStorage['explore:customCSS'] = value;
+                }
+            };
+            localStorage['explore:customCSS'] && ($('.customCSS')[0].value = localStorage['explore:customCSS']);
+            localStorage['explore:customCSSFile'] && ($('.customCSSFile')[0].value = localStorage['explore:customCSSFile']);
+            localStorage['explore:customFont'] && ($('.customFont')[0].value = localStorage['explore:customFont']);
+        }
         window.aerfayingExplore.importConfig = () => {
             Blockey.Utils.prompt('导入配置').then((data) => {
                 try {
@@ -2074,6 +2131,7 @@
     });
 
     addFindElement('span.modal_back-button_3HvWm', (element) => {
+        if (location.pathname.toLowerCase().endWith('editor')) return;
         element.className = 'btn btn-primary';
     });
 
@@ -2195,7 +2253,7 @@
                 </div>
                 <div class="card_wrapper_2Sod3 project-card_wrapper_nRmEY card_vertical_1XmvA new-home-console">
                     <a class="username"></a>
-                    <button class="btn btn-primary ${!Blockey?.INIT_DATA?.loggedInUser && 'disabled'} new-home-checkInBtn" onclick="window.openRobotCheckIn()">签到</button>
+                    <a class="btn btn-primary ${!Blockey?.INIT_DATA?.loggedInUser ? 'disabled' : ''} new-home-checkInBtn" onclick="window.openRobotCheckIn()">签到</a>
                 </div>
             `;
             addStyle(`
@@ -2542,5 +2600,23 @@
             backdrop-filter: blur(6px);
         }
     `);
+
+    // 处理自定义样式
+    if (localStorage['explore:customCSSFile']) {
+        let customCSSFileElement = document.createElement('link');
+        customCSSFileElement.rel = 'stylesheet';
+        customCSSFileElement.href = localStorage['explore:customCSSFile'];
+        document.head.append(customCSSFileElement);
+    }
+    if (localStorage['explore:customCSS']) {
+        addStyle(localStorage['explore:customCSS']);
+    }
+    if (localStorage['explore:customFont']) {
+        addStyle(`
+            html, body, div, h1, h2, h3, h4, h5, h6, p, pre, blockquote, address, img, dl, dt, dd, ol, ul, li, table, caption, tbody, tfoot, thead, tr, th, td, form, fieldset, legend, object, embed, * {
+                font-family: ${encodeHTML(localStorage['explore:customFont'])}, arial, sans-serif;
+            }
+        `);
+    }
     // Your code here...
 })();
