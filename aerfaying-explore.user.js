@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.19.0
+// @version      1.19.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.19.0';
+    const version = '1.19.1';
 
     if (location.search === '?NoUserscript') return;
 
@@ -460,7 +460,9 @@
             settings.forEach((item) => {
                 exportData[item.tag] = localStorage[item.tag];
             });
-            exportData['explore:remark'] = localStorage['explore:remark'];
+            ['explore:mainColor', 'explore:secondColor', 'explore:remark', 'explore:customCSS', 'explore:customCSSFile', 'explore:customFont'].forEach((key) => {
+                if (localStorage.getItem(key)) exportData[key] = localStorage[key];
+            });
             try {
                 await navigator.clipboard.writeText(JSON.stringify(exportData));
                 Blockey.Utils.Alerter.info('已复制到剪贴板');
@@ -535,6 +537,11 @@
                             localStorage[item.tag] = importData[item.tag];
                         } else {
                             throw Error(`${item.tag} 在类型 ${item.type} 下错误的值 ${importData[item.tag]}`)
+                        }
+                    });
+                    ['explore:mainColor', 'explore:secondColor', 'explore:customCSS', 'explore:customCSSFile', 'explore:customFont'].forEach((key) => {
+                        if (importData[key]) {
+                            localStorage[key] = importData[key];
                         }
                     });
                     importData['explore:remark'] && (localStorage['explore:remark'] = JSON.stringify(JSON.parse(importData['explore:remark'])));
@@ -1321,7 +1328,7 @@
                         <small style="display: block">根据 Github 仓库提交信息显示，请以实际更新内容为准！</small>
                     </p>
                     <p>
-                        <small>获取更新的数据来源以及更新渠道均为 Github，因此可能无法打开链接，或者一些浏览器插件可能就不支持直接通过打开链接更新插件，如果您遇到了这些情况，请尝试移除该插件并重新按照<a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">文档中的教程</a>进行安装，亦或禁用自动检查更新功能。</small>
+                        <small>获取更新的数据来源以及此处的更新渠道均为 Github，因此可能无法打开链接，或者一些浏览器插件可能就不支持通过打开链接直接更新插件，如果您遇到了这些情况，请尝试移除该插件并重新按照<a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">文档中的教程</a>进行安装，亦或禁用自动检查更新功能。</small>
                     </p>
                 `
                 );
