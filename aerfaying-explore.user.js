@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.19.1
+// @version      1.19.2
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -32,7 +32,10 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.19.1';
+    const version = '1.19.2';
+
+    const DEFAULT_MAIN_COLOR = '#4c97ff',
+          DEFAULT_SECOND_COLOR = '#82d900';
 
     if (location.search === '?NoUserscript') return;
 
@@ -289,12 +292,6 @@
         default: false,
         desp: '优化了主页的样式、提供了实用功能。'
     }, {
-        tag: 'explore:customThemeColor',
-        text: '自定义主题色',
-        type: 'check',
-        default: false,
-        desp: '<a onclick="window.openThemeSettingModal()">前往设置颜色</a>'
-    }, {
         tag: 'explore:modalBackgroundBlur',
         text: '对话框背景虚化',
         type: 'check',
@@ -414,6 +411,94 @@
             }
             html += '</div>';
         });
+        // 自定义样式
+        html += `
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 1em 0;
+            ">
+                <div style="margin: 0.3em 0">
+                    <b style="display: block">个性化样式</b>
+                    <small>设置主题色、自定义字体、添加自定 CSS...</small>
+                </div>
+                <a onclick="window.openCustomStyle()">前往设置</a>
+            </div>
+        `;
+        window.openCustomStyle = () => {
+            Blockey.Utils.confirm('自定义样式', `
+                <div style="
+                    gap: 1em;
+                    display: flex;
+                    flex-direction: column;
+                    margin-bottom: 1em;
+                ">
+                    <b>设置自定义字体</b>
+                    <input type="text" class="form-control customFont" placeholder="自定义字体名称" onChange="window.setCustomStyle('font', event.target.value)">
+                    
+                    <b>设置主题颜色</b>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <div style="
+                            display: flex;
+                            gap: 1em;
+                        ">
+                            <input type="color" id="mainColor" onchange="window.setCustomStyle('mainColor', event.target.value)">
+                            <input type="color" id="secondColor" onchange="window.setCustomStyle('secondColor', event.target.value)">
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="window.setCustomStyle('defaultTheme')">恢复默认值</button>
+                    </div>
+
+                    <div>
+                        <b>引入自定义 CSS 文件</b>
+                        <small>添加自定义 CSS 文件前请确保您了解这个文件的内容和用途。</small>
+                    </div>
+                    <input type="text" class="form-control customCSSFile" placeholder="自定义 CSS 文件地址" onChange="window.setCustomStyle('cssFile', event.target.value)">
+
+                    <div>
+                        <b>自定 CSS</b>
+                        <small>请确保您理解您所输入的 CSS 代码。</small>
+                    </div>
+                    <textarea 
+                        class="form-control customCSS"
+                        placeholder="自定义 CSS"
+                        style="resize: vertical;"
+                        onChange="window.setCustomStyle('css', event.target.value)"
+                    ></textarea>
+                </div>
+            `);
+            window.setCustomStyle = function (name, value) {
+                if (name == 'cssFile') {
+                    localStorage['explore:customCSSFile'] = value;
+                } else if (name == 'font') {
+                    localStorage['explore:customFont'] = value;
+                } else if (name == 'css') {
+                    localStorage['explore:customCSS'] = value;
+                } else if (name == 'mainColor') {
+                    localStorage['explore:mainColor'] = value;
+                    window.applyThemeColor();
+                    $('.ok-button')[0].style.background = value;
+                    $('.ok-button')[0].style.border = value;
+                } else if (name == 'secondColor') {
+                    localStorage['explore:secondColor'] = value;
+                    window.applyThemeColor();
+                } else if (name == 'defaultTheme') {
+                    window.setCustomStyle('mainColor', DEFAULT_MAIN_COLOR);
+                    window.setCustomStyle('secondColor', DEFAULT_SECOND_COLOR);
+                    $('#mainColor')[0].value = localStorage['explore:mainColor'];
+                    $('#secondColor')[0].value = localStorage['explore:secondColor'];
+                }
+            };
+            localStorage['explore:customCSS'] && ($('.customCSS')[0].value = localStorage['explore:customCSS']);
+            localStorage['explore:customCSSFile'] && ($('.customCSSFile')[0].value = localStorage['explore:customCSSFile']);
+            localStorage['explore:customFont'] && ($('.customFont')[0].value = localStorage['explore:customFont']);
+            $('#mainColor')[0].value = localStorage['explore:mainColor'];
+            $('#secondColor')[0].value = localStorage['explore:secondColor'];
+        }
         // 自动跳转设置
         html += `
             <div style="
@@ -471,63 +556,6 @@
                 Blockey.Utils.Alerter.info('复制到剪贴板失败');
             }
         };
-        // 自定义样式
-        html += `
-            <div style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin: 1em 0;
-            ">
-                <div style="margin: 0.3em 0">
-                    <b style="display: block">自定义样式</b>
-                    <small>自定义字体、隐藏元素...</small>
-                </div>
-                <a onclick="window.openCustomStyle()">设置</a>
-            </div>
-        `;
-        window.openCustomStyle = () => {
-            Blockey.Utils.confirm('自定义样式', `
-                <div style="
-                    gap: 1em;
-                    display: flex;
-                    flex-direction: column;
-                    margin-bottom: 1em;
-                ">
-                    <b>设置自定义字体</b>
-                    <input type="text" class="form-control customFont" placeholder="自定义字体名称" onChange="window.setCustomStyle('font', event.target.value)">
-                    
-                    <div>
-                        <b>引入自定义 CSS 文件</b>
-                        <small>添加自定义 CSS 文件前请确保您了解这个文件的内容和用途。</small>
-                    </div>
-                    <input type="text" class="form-control customCSSFile" placeholder="自定义 CSS 文件地址" onChange="window.setCustomStyle('cssFile', event.target.value)">
-
-                    <div>
-                        <b>自定 CSS</b>
-                        <small>请确保您理解您所输入的 CSS 代码。</small>
-                    </div>
-                    <textarea 
-                        class="form-control customCSS"
-                        placeholder="自定义 CSS"
-                        style="resize: vertical;"
-                        onChange="window.setCustomStyle('css', event.target.value)"
-                    ></textarea>
-                </div>
-            `);
-            window.setCustomStyle = (name, value) => {
-                if (name == 'cssFile') {
-                    localStorage['explore:customCSSFile'] = value;
-                } else if (name == 'font') {
-                    localStorage['explore:customFont'] = value;
-                } else if (name == 'css') {
-                    localStorage['explore:customCSS'] = value;
-                }
-            };
-            localStorage['explore:customCSS'] && ($('.customCSS')[0].value = localStorage['explore:customCSS']);
-            localStorage['explore:customCSSFile'] && ($('.customCSSFile')[0].value = localStorage['explore:customCSSFile']);
-            localStorage['explore:customFont'] && ($('.customFont')[0].value = localStorage['explore:customFont']);
-        }
         window.aerfayingExplore.importConfig = () => {
             Blockey.Utils.prompt('导入配置').then((data) => {
                 try {
@@ -2455,50 +2483,9 @@
         tip.addEventListener('click', event => { event.target == tip && showOldTips() });
     })
 
-    // 设置主题色
-    window.openThemeSettingModal = () => {
-        addStyle(`
-            .explore-set-themeColor {       
-                display: flex;
-                gap: 1em;
-                align-items: center;
-                font-weight: 600;
-            }
-        `)
-        Blockey.Utils.confirm('设置主题色', `
-            <div style="
-                display: flex;
-                justify-content: center;
-                flex-direction: column;
-                align-items: center;
-            ">
-                <div class="explore-set-themeColor">
-                    主颜色
-                    <input type="color" id="mainColor" value="${localStorage['explore:mainColor']}" onchange="localStorage['explore:mainColor'] = event.target.value; applyThemeColor();">
-                </div>
-                <div class="explore-set-themeColor" style="margin: 0.5em 0">
-                    副颜色
-                    <input type="color" id="secondColor" value="${localStorage['explore:secondColor']}" onchange="localStorage['explore:secondColor'] = event.target.value; applyThemeColor();">
-                </div>
-                <button class="btn btn-primary btn-sm" onclick="
-                    localStorage['explore:mainColor'] = '#00897B';
-                    localStorage['explore:secondColor'] = '#4CAF50';
-                    applyThemeColor();
-                    document.querySelector('#mainColor').value = '#00897B';
-                    document.querySelector('#secondColor').value = '#4CAF50';
-                ">恢复默认值</button>
-            </div>
-        `);
-        let interval = setInterval(() => {
-            if ($('.footer').length) {
-                $('.footer')[0].style.display = 'none';
-                clearInterval(interval);
-            }
-        });
-    }
     // 设置默认主题色
-    if (!localStorage['explore:mainColor']) localStorage['explore:mainColor'] = '#00897B';
-    if (!localStorage['explore:secondColor']) localStorage['explore:secondColor'] = '#4CAF50';
+    if (!localStorage['explore:mainColor']) localStorage['explore:mainColor'] = DEFAULT_MAIN_COLOR;
+    if (!localStorage['explore:secondColor']) localStorage['explore:secondColor'] = DEFAULT_SECOND_COLOR;
     // 应用主题色函数
     window.applyThemeColor = () => {
         // mainColor: "#008080", mainColorRGBValue: "0, 128, 128", mainColorRGB: "rgb(0, 128, 128, 1)"
@@ -2592,7 +2579,12 @@
         });
     };
     // 应用自定义主题色
-    (localStorage['explore:customThemeColor'] == 'true') && applyThemeColor();
+    if (localStorage['explore:customThemeColor'] && localStorage['explore:customThemeColor'] != 'true') {
+        localStorage['explore:mainColor'] = DEFAULT_MAIN_COLOR;
+        localStorage['explore:secondColor'] = DEFAULT_SECOND_COLOR;
+        localStorage.removeItem('explore:customThemeColor');
+    }
+    (localStorage['explore:mainColor'] != DEFAULT_MAIN_COLOR || localStorage['explore:secondColor'] != DEFAULT_SECOND_COLOR) && applyThemeColor();
 
     // 查看活跃度等级值
     addFindElement(`.stat-graph_day-0_idJxi`, e => e.title = '等级 0 / 4');
