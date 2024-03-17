@@ -104,7 +104,7 @@
         }
 
         /* 功能 */
-        .function-card {
+        .function-card, .card {
             padding: 0 1em;
             border-radius: 8px;
             box-shadow: 1px 1px 15px rgb(0, 0, 0, 0.075);
@@ -144,6 +144,61 @@
             padding-right: 0;
             min-width: 3em;
         }
+
+        .install-card {
+            padding: 1em 1.5em;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #000 !important;
+        }
+
+        .install-card:hover {
+            box-shadow: 1px 1px 25px rgb(0, 0, 0, 0.1);
+        }
+
+        .install-card:active {
+            background: rgb(0, 0, 0, 0.025);
+        }
+        
+        .install-card .version-text, .install-card  .install-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .install-card  .install-text {
+            align-items: flex-end;
+        }
+
+        .install-card .version-text .version-title, .install-card  .install-text .install-tip {
+            font-size: 0.5em;
+            opacity: 0.5;
+        }
+        
+        .install-card .version-text .version-value, .install-card  .install-text .install-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: teal;
+        }   
+
+        .install-card  .install-text .install-title {
+            color: #007bff;
+        }
+
+        @media screen and (max-width: 350px) {
+            .install-card, .install-card .version-text {
+                flex-direction: column-reverse;
+                align-items: center;
+            }
+            .install-card {
+                gap: 0.5em;
+            }
+            .install-card  .install-text .install-tip {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -167,15 +222,18 @@
         </div>
         <div class="install" id="安装插件">
             <h2>安装插件</h2>
-            <p>
-                <small>已经安装插件管理器？</small>
-                <a class="install-now" href="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js">
-                    点我直接安装 / 更新
-                </a>
-            </p>
+            <a class="card install-card" href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js" target="_blank">
+                <div class="version-text">
+                    <span class="version-title">当前版本 (CDN)</span>
+                    <span class="version-value">{{ currentVersion }}</span>
+                </div>
+                <div class="install-text">
+                    <span class="install-title">前往安装</span>
+                    <span class="install-tip">需要插件管理器</span>
+                </div>
+            </a>
             <div>
-                推荐使用 Tampermonkey（油猴）作为插件管理器，如果您已经安装了插件管理器了，请转到 <a href="#"
-                    @click="installStep = 1; installSubStep = 0">安装该 Userscript</a>。
+                如果您还没有安装插件管理器或不太清楚如何安装插件，欢迎参考下方的教程。
             </div>
             <div class="menu">
                 <div class="install-step">
@@ -219,7 +277,7 @@
                 </div>
                 <div v-if="installStep == 1 && installSubStep == 0">
                     <p>请直接点击 <b><a
-                                href="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js"
+                                href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js"
                                 target="_blank">该链接</a></b>（<a
                                 href="https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js"
                                 target="_blank">备用地址</a>） 来安装 Userscript。<br />
@@ -233,7 +291,7 @@
                         <b>1.</b> 打开 设置 - Safari 浏览器 - 扩展 - Userscripts，打开扩展<br />
                         <b>2.</b> 打开 Userscripts 应用，点击“Set Userscripts Directory”摁钮，选择一个方便找到的文件夹。<br />
                         <b>3.</b> 打开 
-                        <b><a href="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js"target="_blank">该链接</a></b>
+                        <b><a href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js" target="_blank">该链接</a></b>
                         ，点击地址栏右侧拼图图标，点击 Userscripts，出现访问的权限请求时点击 始终允许，然后在弹出的 Userscript 下拉框中点击 Tap to install，翻到底下，点击 Install。<br />
                         <b>4.</b> 打开 A 营，用和上面相同的方式允许 Userscripts 访问 A 营，点击地址栏拼图图标 → 点击 Userscripts → 点击始终允许，然后刷新页面即可！<br /><br />
                         <b>对于 MacOS 用户：</b><br />
@@ -242,7 +300,7 @@
                 </div>
                 <div v-if="installStep == 1 && installSubStep == 2">
                     <p>
-                        打开 <b><a href="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js"
+                        打开 <b><a href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js"
                                 target="_blank">该链接</a></b>（<a
                                 href="https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js"
                                 target="_blank">备用地址</a>），浏览器会弹出是否安装的询问框，点击安装即可。<br />
@@ -251,7 +309,7 @@
                 <div v-if="installStep == 1 && installSubStep == 3">
                     <p>
                         具体安装方式请查询文档或搜索引擎，脚本内容在 <a
-                            href="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/aerfaying-explore.user.js"
+                            href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js"
                             target="_blank">这个链接</a>（<a
                             href="https://github.com/waterblock79/aerfaying-explore/raw/main/aerfaying-explore.user.js"
                             target="_blank">备用地址</a>） 中。<br />
@@ -305,7 +363,7 @@
     <script>
         const { createApp } = Vue
 
-        createApp({
+        const app = createApp({
             methods: {
             },
             data() {
@@ -428,17 +486,29 @@
                         {
                             text: '自定义主题色',
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/自定义主题色.png',
-                            desp: '提供自定义社区主题色的能力！'
+                            desp: '提供自定义社区主题色的能力！需要在“自定义样式”内设置。'
                         },
                         {
                             text: '自定义样式',
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/自定义样式.png',
-                            desp: '支持自定义字体和添加自定 CSS 样式。'
+                            desp: '支持设置主题色、自定义字体和添加自定 CSS。'
                         }
-                    ]
+                    ],
+                    currentVersion: '载入中'
                 }
+            },
+            beforeMount () {
+                fetch('https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js')
+                    .then(r => r.text())
+                    .then(data => {
+                        this.currentVersion = data.match(/@version[^\n]*/g)[0].split(' ').pop();
+                    })
+                    .catch(() => {
+                        this.currentVersion = '未知';
+                    })
             }
         }).mount('#app');
+
     </script>
 </body>
 

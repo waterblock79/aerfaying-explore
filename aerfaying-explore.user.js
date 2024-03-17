@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.19.2
+// @version      1.19.3
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -14,9 +14,15 @@
 // @grant        unsafeWindow
 // @license      MIT
 // ==/UserScript==
+
 /*
    aerfaying-explore 是一个非官方的、针对阿儿法营/稽木世界社区的开源优化插件
    https://github.com/waterblock79/aerfaying-explore
+*/
+
+/* 
+    Purge jsDeliver CDN cache: https://www.jsdelivr.com/tools/purge
+     - https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js
 */
 
 (function () {
@@ -32,7 +38,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.19.2';
+    const version = '1.19.3';
 
     const DEFAULT_MAIN_COLOR = '#4c97ff',
           DEFAULT_SECOND_COLOR = '#82d900';
@@ -1356,7 +1362,7 @@
                         <small style="display: block">根据 Github 仓库提交信息显示，请以实际更新内容为准！</small>
                     </p>
                     <p>
-                        <small>获取更新的数据来源以及此处的更新渠道均为 Github，因此可能无法打开链接，或者一些浏览器插件可能就不支持通过打开链接直接更新插件，如果您遇到了这些情况，请尝试移除该插件并重新按照<a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">文档中的教程</a>进行安装，亦或禁用自动检查更新功能。</small>
+                        <small>获取更新的数据来源以及此处的更新渠道均为 Github，因此可能无法打开链接，或者一些浏览器插件可能就不支持通过打开链接直接更新插件，如果您遇到了这些情况，请尝试 <b><a href="https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js">从 CDN 安装</a></b> 或重新 <a href="https://waterblock79.github.io/aerfaying-explore/#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6">安装插件</a>，亦或禁用自动检查更新功能。</small>
                     </p>
                 `
                 );
