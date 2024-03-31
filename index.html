@@ -332,7 +332,7 @@
                                 '收起' : '展开' }}
                             </span>
                         </div>
-                        <div v-show="userscriptFunctionSelected == index">
+                        <div v-if="userscriptFunctionSelected == index">
                             <div v-if="item.desp" style="font-size: .75em; margin-bottom: .5em;">{{ item.desp }}</div>
                             <!-- 单个图片 -->
                             <img :src="item.image" v-if="typeof item.image == 'string'" />
@@ -416,9 +416,9 @@
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/复制链接.png'
                         },
                         {
-                            text: '在评论时添加贴吧表情图片',
+                            text: '在评论时添加贴吧 / QQ 表情图片',
                             image: 'https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情.png',
-                            desp: '🫧 此功能可以供用户一键在输入框中添加对应贴吧表情的 Markdown 图片代码，贴吧表情图片的版权百度贴吧所有。'
+                            desp: '🫧 此功能可以供用户一键在输入框中添加对应贴吧表情的 Markdown 图片代码，表情图片的版权百度贴吧 / 腾讯 QQ 所有。'
                         },
                         {
                             text: '作品全屏浏览时禁止页面滚动',

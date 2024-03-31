@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.19.3
+// @version      1.20.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -20,7 +20,7 @@
    https://github.com/waterblock79/aerfaying-explore
 */
 
-/* 
+/*
     Purge jsDeliver CDN cache: https://www.jsdelivr.com/tools/purge
      - https://cdn.jsdelivr.net/gh/waterblock79/aerfaying-explore/aerfaying-explore.user.js
 */
@@ -38,10 +38,10 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.19.3';
+    const version = '1.20.0';
 
     const DEFAULT_MAIN_COLOR = '#4c97ff',
-          DEFAULT_SECOND_COLOR = '#82d900';
+        DEFAULT_SECOND_COLOR = '#82d900';
 
     if (location.search === '?NoUserscript') return;
 
@@ -61,7 +61,7 @@
     //  $(selector)
     //  即 document.querySelectorAll(selector)
     /**
-     * @param {string} selector 
+     * @param {string} selector
      * @returns {HTMLElement[]}
      */
     const $ = (selector) => document.querySelectorAll(selector);
@@ -101,7 +101,7 @@
     };
     window.addFindElement = addFindElement;
 
-    // addHrefChangeEvent(callback) 
+    // addHrefChangeEvent(callback)
     // 当页面 location.href 改变触发该事件
     let lastHref = null;
     let hrefChangeEvent = [];
@@ -222,6 +222,17 @@
             <a target="_blank" href="/AboutLoading">如何选择？</a>
         `
     }, {
+        tag: 'explore:emoji',
+        text: '在评论时添加贴吧或 QQ 表情',
+        select: [
+            '关闭【表情】按钮',
+            '使用百度贴吧表情',
+            '使用 QQ 表情'
+        ],
+        type: 'radio',
+        default: 1,
+        desp: `表情图像的版权属于百度贴吧或腾讯 QQ`
+    }, {
         tag: 'explore:https',
         text: '自动 HTTPS',
         type: 'check',
@@ -247,11 +258,6 @@
         type: 'check',
         default: false,
         disabled: !navigator.clipboard
-    }, {
-        tag: 'explore:tiebaEmoji',
-        text: '在评论时添加贴吧表情',
-        type: 'check',
-        default: false,
     }, {
         tag: 'explore:fullscreenDisableScroll',
         text: '作品全屏时禁用鼠标滚轮滚动',
@@ -364,8 +370,8 @@
             `;
             // 设置名称，如果是 check 类型的设置项，就用 span 包裹，否则就用 b 包裹
             html += `
-                        <label 
-                            class="explore-settings-label" 
+                        <label
+                            class="explore-settings-label"
                             for="${item.tag}"
                         >
                             <span>${item.text}</span>
@@ -442,7 +448,7 @@
                 ">
                     <b>设置自定义字体</b>
                     <input type="text" class="form-control customFont" placeholder="自定义字体名称" onChange="window.setCustomStyle('font', event.target.value)">
-                    
+
                     <b>设置主题颜色</b>
                     <div style="
                         display: flex;
@@ -469,7 +475,7 @@
                         <b>自定 CSS</b>
                         <small>请确保您理解您所输入的 CSS 代码。</small>
                     </div>
-                    <textarea 
+                    <textarea
                         class="form-control customCSS"
                         placeholder="自定义 CSS"
                         style="resize: vertical;"
@@ -517,7 +523,7 @@
                     <b style="display: block">自动跳转</b>
                     <small>${window.GMAvailable ? '若不理解该选项的用途，请勿修改' : '似乎不支持该功能？'}</small>
                 </div>
-                <select 
+                <select
                     style="height: 2em"
                     id="explore-redirect-selector"
                     onchange="SetRedirect(document.querySelector('#explore-redirect-selector').value)"
@@ -1218,7 +1224,7 @@
     }
 
     // 贴吧表情
-    if (localStorage['explore:tiebaEmoji'] == 'true') {
+    if (localStorage['explore:emoji'] !== 0) {
         addFindElement('.control-group', (element) => {
             // 创建表情选择器元素
             let emojiSelector = document.createElement('div');
@@ -1226,19 +1232,22 @@
             emojiSelector.classList.add('explore-emoji-selector-' + selectorId);
             emojiSelector.classList.add('explore-emoji-selector');
             emojiSelector.style.display = 'none';
+            // 创建表情列表
+            let emojiList = [];
+            if (localStorage['explore:emoji'] == 1) for (let i = 1; i <= 50; i++) emojiList.push(`https://tb2.bdstatic.com/tb/editor/images/face/i_f${i < 10 ? `0${i}` : i}.png?t=20140803`)
+            if (localStorage['explore:emoji'] == 2) {
+                let qqEmojiIdList = ['C7860496100A25C248E2B49BC43BF107', 'D91C963E7A9A71B1DE4C34E7FA3E134D', '2374EC0FEBDA5B4D7FF4D4417AD30794', 'F7E3450F8116DB144736CF2D8BA40AE1', 'D6CC724B743B16E8F5669B1C8D2E1419', '79BC0204EFDA5FC8B7F58DD2919F14BA', '01F0D3052CEA6068BA78D422AF39E8F4', '4C610EC70AACD9762AC6DBB536A41594', '2D201BDBAA9EDDFBD2CD9C56C0D3DE1B', '92F54F733E9AFC4751B850C6CA8283E0', '60F28830ACD3C9F3342BB9FD08ACBB3D', 'BE3BFF1AB063D67A0BEE180DE25E5259', '26E10845729CCB1D352346D366321560', 'B9341F2551CC97EADC08DA05A729C24C', 'F381BB44F054EE263B8F352B2465FE16', 'fd1bc31195dc23d23b142d1aed152b2d', '7BDDC12E58ED7104965ACAA815C01AF8', '4EBC9B78B3EE653A6C01231CF7F88336', '70F379549AF342CDC85CE71430138E0C', 'D15CC85440F52212F7F66CCBA48DF7E1', 'F41BADB480332696C6CAE2A9BE63A727', 'F4489229AD9173DB271778B4F8550FFE', '2604155BDA603A0AF3B0562F53924E4D', '20F91BA637DF9B00346E300265C25134', '2179AB12C8B0875E50F822F34F9E8C4E', 'F169ABD2D17E1D782E07B5566FE8CBDF', 'BE332353C51111E908AD37768C84EC6A', 'C2F482CC3178644BA7559B7D81646359', 'EB572216B4A80F2ACC02050129773FA7', '2DE655373EADAEE34C537B5CBE1F7E86', '46525544D8ED7C25414445A26213935D', '73AE17624A2F287E305576EAD83FB381', '8BD6B128E35D52E35B34D2A6144F63AA', '578463708D7DE56A1C4E6331831B3E2E', 'BC762F2A3AD31450A17A2D679A6288EE', '163BD977FF7352707ACD8B4354A519D3', '9FC604A819EE3DFDC58FA5255618620B', '481A1EABD8D94C69378B7D1F79952D61', 'A1E74402D4A4047C62866F90C6D5028C', '5E4A5467C1D06467EFC6DF726EE4731F', '3CFB6F4C7F668E8898968D0FA125955D', '1EF107CB131F3DC1B61575467B71A1E5', 'EF373068892F296DFEB1FE2CDD547B31', 'D8D77510DA9AC1F3971D894A7C87544C', '9F9C4DD7976388E6406E6026FB4DDA05', '9753F3983F9CFACD000795ED69EA4E02', 'fb081776741238346b289d73476da8ce', '19131914FA8B10BF88675681F7485E66', '2B542AACE644AE2A72CF48F1B6C65AB9', '456cedab9e073e9887dbfb14a8711171', '8e506ffac01ffdfec525db16455acafb', '17DCBC5BD8C616290760679070BF4FDA']
+                qqEmojiIdList.forEach(id => emojiList.push(`https://cdn.gitblock.cn/Media?name=${id}.png`));
+            }
             // 创建表情元素
-            for (let i = 1; i <= 50; i++) {
-                // 使表情 ID 始终为两位
-                if (i < 10) {
-                    i = '0' + i;
-                }
+            emojiList.forEach((url) => {
                 // 创建元素并设置 URL 和点击后在输入框添加对应 Markdown
                 let emoji = document.createElement('img');
-                emoji.src = `https://tb2.bdstatic.com/tb/editor/images/face/i_f${i}.png?t=20140803`;
+                emoji.src = url;
                 emoji.addEventListener('click', (e) => {
                     let textarea = e.target.parentNode.parentNode.parentNode.parentNode.querySelector('textarea');
                     // value +=
-                    textarea.value = textarea.value.slice(0, textarea.selectionStart) + `![贴吧表情](${e.target.src})` + textarea.value.slice(textarea.selectionStart);
+                    textarea.value = textarea.value.slice(0, textarea.selectionStart) + `![表情](${e.target.src})` + textarea.value.slice(textarea.selectionStart);
                     // 关闭并 focus 到输入框
                     emojiSelector.style.display = 'none';
                     textarea.focus();
@@ -1256,7 +1265,7 @@
                     }
                 })
                 emojiSelector.appendChild(emoji);
-            }
+            });
             insertBefore(emojiSelector, element.childNodes[0]);
             // 创建打开表情选择器按钮
             let openSelector = document.createElement('span');
@@ -1271,30 +1280,35 @@
             insertBefore(openSelector, element.childNodes[0]);
         })
         addStyle(`
-        .explore-emoji-selector {
-            display: flex;
-            position: absolute;
-            flex-wrap: wrap;
-            z-index: 1999;
-            background: white;
-            box-shadow: 0px 0px 10px rgb(0 0 0 / 25%);
-            border-radius: 4px;
-            padding: 0.5em;
-            margin-right: 4em;
-            left: 30%;
-            margin-top: 0.5em;
-            max-width: 30em;
-            justify-content: center;
-        }
-        .explore-emoji-selector > img {
-            margin: 0.3em !important;
-            width: 2em;
-            cursor: pointer;
-        }
-        .comment_comment_P_hgY .comment_info_2Sjc0 {
-            overflow: inherit;
-        }
-    `);
+            .explore-emoji-selector {
+                display: flex;
+                position: absolute;
+                flex-wrap: wrap;
+                z-index: 1999;
+                background: rgba(255, 255, 255, 0.75);
+                box-shadow: 0px 0px 16px rgb(0 0 0 / 15%);
+                border-radius: 8px;
+                padding: 1em;
+                transform: translateX(calc(-100% + 3em));
+                margin-top: 0.5em;
+                max-width: min(40%, 32em);
+                justify-content: center;
+                backdrop-filter: blur(4px);
+            }
+            @media screen and (max-width: 768px) {
+                .explore-emoji-selector {
+                    min-width: calc(100% - 12em);
+                }
+            }
+            .explore-emoji-selector > img {
+                margin: 0.3em !important;
+                width: 2em;
+                cursor: pointer;
+            }
+            .comment_comment_P_hgY .comment_info_2Sjc0 {
+                overflow: inherit;
+            }
+        `);
     }
 
     // 在作品全屏显示时禁用鼠标滚轮滚动
@@ -2142,19 +2156,19 @@
                         tr.innerHTML = `
                             <td>
                                 <a href="/Users/${encodeURIComponent(vote.creator.id)}" class="user-info_wrapper_2acbL">
-                                    <img 
+                                    <img
                                         class="thumb-img_thumb_PzoKt thumb-img_thumb-border_14aaQ user-info_image_1bbCz user-info_circle_3xryU"
                                         src="https://cdn.gitblock.cn/Media?name=${encodeURIComponent(vote.creator.thumbId)}"
                                     ><span class="username">${encodeHTML(vote.creator.username)}</span>
                                 </a>
                             </td>
-                            <td 
+                            <td
                                 style="text-wrap: nowrap"
                             >
                                 ${['', '初级', '中级', '高级', '史诗级', '传说级'][vote.level] + '精华'}
                             </td>
                             <td>${((vote.scoreArts + vote.scoreCreative + vote.scoreProgram) / 3).toFixed(1)}</td>
-                            <td 
+                            <td
                                 style="text-wrap: nowrap"
                             >
                                 ${Blockey.Utils.formatDateString(new Date(vote.createTime), 'yyyy-MM-dd')}
@@ -2329,7 +2343,7 @@
                 @media screen and (max-width: 480px) {
                     .new-home-carousel {
                         display: none;
-                    } 
+                    }
                     .new-home-console {
                         width: 100%;
                         margin: 0 1em;
