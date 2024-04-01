@@ -51,9 +51,9 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 9. 复制页面 Markdown 链接
 
    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/复制链接.png" style="width: 20em"/>
-10. 在评论时添加贴吧 / QQ 表情图片（实验性功能）
+10. 在评论时添加贴吧 / QQ 表情图片
 
-    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/贴吧表情.png" style="width: 20em"/>
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/表情.png" style="width: 20em"/>
 11. 作品全屏浏览时禁止页面滚动
 12. 插件检查更新
 

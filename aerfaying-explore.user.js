@@ -1225,10 +1225,10 @@
 
     // 贴吧表情
     if (localStorage['explore:emoji'] !== 0) {
-        addFindElement('.control-group', (element) => {
+        addFindElement('.reply-box_footer_2AkDv', (element) => {
             // 创建表情选择器元素
             let emojiSelector = document.createElement('div');
-            let selectorId = (Math.random() * 10 ^ 8).toFixed().toString(16);
+            let selectorId = (Math.random() * Math.pow(10, 8)).toFixed().toString();
             emojiSelector.classList.add('explore-emoji-selector-' + selectorId);
             emojiSelector.classList.add('explore-emoji-selector');
             emojiSelector.style.display = 'none';
@@ -1266,7 +1266,7 @@
                 })
                 emojiSelector.appendChild(emoji);
             });
-            insertBefore(emojiSelector, element.childNodes[0]);
+            element.append(emojiSelector);
             // 创建打开表情选择器按钮
             let openSelector = document.createElement('span');
             openSelector.classList.add('btn');
@@ -1277,28 +1277,25 @@
                 let element = document.querySelector('.explore-emoji-selector-' + selectorId);
                 element.style.display = element.style.display == 'flex' ? 'none' : 'flex';
             });
-            insertBefore(openSelector, element.childNodes[0]);
+            insertBefore(openSelector, element.querySelector('.control-group').childNodes[0]);
         })
         addStyle(`
+            .reply-box_footer_2AkDv {
+                position: relative;
+            }
             .explore-emoji-selector {
                 display: flex;
                 position: absolute;
                 flex-wrap: wrap;
                 z-index: 1999;
-                background: rgba(255, 255, 255, 0.75);
-                box-shadow: 0px 0px 16px rgb(0 0 0 / 15%);
+                background: rgba(255, 255, 255, 0.85);
+                box-shadow: 0px 0px 64px rgb(0 0 0 / 20%);
                 border-radius: 8px;
                 padding: 1em;
-                transform: translateX(calc(-100% + 3em));
                 margin-top: 0.5em;
-                max-width: min(40%, 32em);
                 justify-content: center;
                 backdrop-filter: blur(4px);
-            }
-            @media screen and (max-width: 768px) {
-                .explore-emoji-selector {
-                    min-width: calc(100% - 12em);
-                }
+                transform: translateY(calc(50% + 1.5em));
             }
             .explore-emoji-selector > img {
                 margin: 0.3em !important;
