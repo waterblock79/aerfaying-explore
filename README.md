@@ -6,6 +6,8 @@
 
 官方站点：[waterblock79.github.io/aerfaying-explore](https://waterblock79.github.io/aerfaying-explore/)，可以在这个站点查看安装教程、插件功能等。
 
+💤 这个项目不再处于活跃开发状态。
+
 ## 目录
 
 - [安装](#安装) - 安装这个 Userscript
@@ -99,3 +101,6 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/自定义样式.png" style="width: 20em"/>
 
+26. 评论时上传图片
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/评论上传图片.png" style="width: 20em"/>

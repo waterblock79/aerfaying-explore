@@ -1,7 +1,8 @@
+// @ts-nocheck
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.20.0
+// @version      1.21.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -38,7 +39,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.20.0';
+    const version = '1.21.0';
 
     const DEFAULT_MAIN_COLOR = '#4c97ff',
         DEFAULT_SECOND_COLOR = '#82d900';
@@ -238,6 +239,12 @@
         type: 'check',
         default: true,
     }, {
+        tag: 'explore:uploadImage',
+        text: '在评论时上传图片',
+        type: 'check',
+        default: true,
+        desp: '实验性功能，请勿滥用'
+    }, {
         tag: 'explore:hoverId',
         text: '仅当鼠标悬停在评论上时显示评论 ID',
         type: 'check',
@@ -323,7 +330,6 @@
             <b>嗨${Blockey.Utils.getLoggedInUser() ? `，${Blockey.Utils.getLoggedInUser().username}` : ''}！欢迎使用 Aerfaying-Explore 插件！</b><br/>
             - 当您看到这条消息时说明您已经成功地安装了这个插件，希望这个插件能有效地提升您的社区探索体验！<br/>
             - 大部分拓展功能默认是关闭的，您可以在 <a onclick="$('#nav-explore-setting')[0].click()">插件设置</a> 中选择启用或关闭插件功能。<br/>
-            - 如果您有功能建议或者遇到了 Bug，欢迎在 <a href="https://github.com/waterblock79/aerfaying-explore">Github</a> 或 <a href="/Users/1068072">作者的主页</a> 反馈~
         `);
     }
 
@@ -1481,6 +1487,10 @@
             .comment-panel_comment-panel_3pBsc form .markdown-editor_previewTab_e6pLX {
                 margin-left: 4px;
             }
+
+            .explore-comment-preview img {
+                max-width: 100%;
+            }
         `);
         addFindElement(`.reply-box_replyBox_3Fg5C`, (element) => {
             // 创建预览摁钮组及其子摁钮
@@ -2038,17 +2048,6 @@
                 ">
                     您可以在 Markdown 沙盒中使用 A 营的 Markdown 并实时预览。编辑会实时保存到本地存储中，请勿在这里输入隐私信息或者重要内容。
                     <br/>
-                    <p style="
-                        display: flex;
-                        align-items: stretch;
-                        font-size: 0.8em;
-                        margin: 0.5em 0;
-                    ">
-                        <input type="checkbox" id="autoScroll" style="
-                            margin: 0 0.75em 0 0;
-                        ">
-                        <span>自动跟随滚动</span>
-                    </p>
                 </p>
             </h4>
             <div class="sandbox-container">
@@ -2096,6 +2095,7 @@
         })
     };
     addFindElement('.sidebar-nav_navigations_1X4Qe', (element) => {
+        if (!window.location.pathname.match(/\/Users\/[0-9]+\/My/g)) return;
         let e = document.createElement('div');
         e.className = 'sidebar-nav_nav_1dRFd sidebar-nav_on_2_HNF';
         e.innerHTML = `
@@ -2105,18 +2105,6 @@
         `;
         element.append(e);
     });
-    addFindElement('#autoScroll', (element) => {
-        element.addEventListener('click', (e) => {
-            window.sandbox.autoScroll = !window.sandbox.autoScroll;
-            $('.sandbox-container')[0].setAttribute('autoScroll', window.sandbox.autoScroll);
-        });
-        $('.sandbox-container > textarea')[0].addEventListener('scroll', (e) => {
-            if (!window.sandbox.autoScroll) return;
-            const content = $('.sandbox-container > div')[0];
-            const textarea = $('.sandbox-container > textarea')[0]
-            content.scroll(0, (textarea.scrollTop + textarea.clientHeight * 0.5) / textarea.scrollHeight * content.scrollHeight - content.clientHeight * 0.5);
-        });
-    })
 
     // 查看全部精华选票
     addFindElement('.featured-vote-modal_body_F4hto, .featured-vote-modal_itemDetails_3rvD6', (element) => {
@@ -2633,6 +2621,36 @@
                 font-family: ${encodeHTML(localStorage['explore:customFont'])}, arial, sans-serif;
             }
         `);
+    }
+
+    // 移动端评论区上传图片
+    if (localStorage['explore:uploadImage'] == 'true') {
+        addFindElement('.reply-box_footer_2AkDv', (element) => {
+            // 插入按钮
+            element.querySelector('.control-group').childNodes[0].insertAdjacentHTML('beforebegin', `<span class="btn btn-sm" id="explore-insert-image">图片</span>`);
+            element.querySelector('#explore-insert-image').addEventListener('click', () => {
+                const fileSelector = document.createElement('input');
+                fileSelector.type = 'file';
+                fileSelector.accept = 'image/*';
+                fileSelector.addEventListener('input', (e) => {
+                    let reader = new FileReader();
+                    reader.readAsDataURL(fileSelector.files[0]);
+                    reader.onload = () => {
+                        Blockey.Utils.ajax({url: '/WebApi/Common/UploadImage', data: {dataUrl: reader.result}, success: (data) => {
+                            let textarea = element.parentNode.querySelector('textarea');
+                            textarea.value = textarea.value.slice(0, textarea.selectionStart) + `![](${data.imgUrl})` + textarea.value.slice(textarea.selectionStart);
+                            textarea.focus();
+                            let evt = new Event('change');
+                            textarea.dispatchEvent(evt);
+                            let eventHandlerKey = Object.keys(textarea).find((item) => item.includes('_reactEventHandlers'));
+                            let eventHandler = textarea[eventHandlerKey];
+                            eventHandler.onChange(evt);
+                        }});
+                    }
+                });
+                fileSelector.click();
+            });
+        });
     }
     // Your code here...
 })();
