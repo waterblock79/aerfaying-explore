@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.21.0
+// @version      1.21.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -39,7 +39,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.21.0';
+    const version = '1.21.1';
 
     const DEFAULT_MAIN_COLOR = '#4c97ff',
         DEFAULT_SECOND_COLOR = '#82d900';
@@ -527,7 +527,7 @@
             ">
                 <div style="margin: 0.3em 0">
                     <b style="display: block">自动跳转</b>
-                    <small>${window.GMAvailable ? '若不理解该选项的用途，请勿修改' : '似乎不支持该功能？'}</small>
+                    <small>${window.GMAvailable ? '移动到 gitblock.cn' : '似乎不支持该功能？'}</small>
                 </div>
                 <select
                     style="height: 2em"
@@ -536,7 +536,6 @@
                     ${window.GMAvailable ? '' : 'disabled'}
                 >
                     <option value="none">不自动跳转</option>
-                    <option value="aerfaying">自动跳转 aerfaying.com</option>
                     <option value="gitblock">自动跳转 gitblock.cn</option>
                 </select>
             </div>
@@ -1470,10 +1469,19 @@
         }
         // 进行跳转
         let autoRedirect = GM_getValue('explore:autoRedirect', 'none');
-        if (autoRedirect == 'aerfaying' && window.location.host != 'aerfaying.com') {
-            window.location.host = 'aerfaying.com';
-        } else if (autoRedirect == 'gitblock' && window.location.host != 'gitblock.cn') {
-            window.location.host = 'gitblock.cn';
+        if (autoRedirect == 'aerfaying') {
+            GM_setValue('explore:autoRedirect', 'none');
+            Blockey.Utils.confirm('移动到 gitblock.cn', 'aerfaying.com 域名即将停用，我们不再支持自动跳转到该域名，建议您移动到 <b>gitblock.cn</b> 下继续使用社区。<style>.footer { display: none; }</style>');
+        }
+        if (autoRedirect == 'gitblock') {
+            if (window.location.host != 'gitblock.cn') window.location.host = 'gitblock.cn';
+            addFindElement('a', el => {
+                const url = new URL(el.href, 'https://gitblock.cn');
+                if (url.host.match(/aerfaying\.com$/g)) {
+                    url.host = url.host.replace(/aerfaying\.com$/g, 'gitblock.cn');
+                    el.href = url.href;
+                }
+            })
         }
     }
 
