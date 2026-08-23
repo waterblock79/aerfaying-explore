@@ -104,3 +104,7 @@ Userscript 的地址如下，可以参考 [Userscript 网站中的安装教程](
 26. 评论时上传图片
 
     <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/评论上传图片.png" style="width: 20em"/>
+
+27. 设置默认过滤条件 / 排序条件
+
+    <img src="https://fastly.jsdelivr.net/gh/waterblock79/aerfaying-explore@main/assets/设置默认过滤器.png" style="width: 20em"/>

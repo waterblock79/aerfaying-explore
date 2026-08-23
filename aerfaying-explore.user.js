@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.21.1
+// @version      1.22.0
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -39,7 +39,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.21.1';
+    const version = '1.22.0';
 
     const DEFAULT_MAIN_COLOR = '#4c97ff',
         DEFAULT_SECOND_COLOR = '#82d900';
@@ -87,10 +87,13 @@
     }
     window.addSelectorEvent = addSelectorEvent;
 
-
-    //  addFindElement(selector, callback)
-    //  当选择器发现新的符合 selector 的元素就执行 callback，callback 会传入该元素。
     let findElement = [];
+    /**
+     *  **`addFindElement(selector, callback)`**  
+     *  当选择器发现新的符合 selector 的元素就执行 callback，callback 会传入该元素。
+     * @param {string} selector 
+     * @param {(el: HTMLElement) => void} callback 
+     */
     const addFindElement = (selector, callback) => {
         findElement.push({
             selector: selector,
@@ -315,6 +318,12 @@
         text: '对话框背景虚化',
         type: 'check',
         default: true
+    }, {
+        tag: 'explore:setDefaultFilter',
+        text: '设置默认过滤器 / 排序器类型',
+        default: true,
+        type: 'check',
+        desp: '例如可以将默认按“最近发布”排序改为默认按“最近修改”排序'
     }
     ];
 
@@ -2644,20 +2653,103 @@
                     let reader = new FileReader();
                     reader.readAsDataURL(fileSelector.files[0]);
                     reader.onload = () => {
-                        Blockey.Utils.ajax({url: '/WebApi/Common/UploadImage', data: {dataUrl: reader.result}, success: (data) => {
-                            let textarea = element.parentNode.querySelector('textarea');
-                            textarea.value = textarea.value.slice(0, textarea.selectionStart) + `![](${data.imgUrl})` + textarea.value.slice(textarea.selectionStart);
-                            textarea.focus();
-                            let evt = new Event('change');
-                            textarea.dispatchEvent(evt);
-                            let eventHandlerKey = Object.keys(textarea).find((item) => item.includes('_reactEventHandlers'));
-                            let eventHandler = textarea[eventHandlerKey];
-                            eventHandler.onChange(evt);
-                        }});
+                        Blockey.Utils.ajax({
+                            url: '/WebApi/Common/UploadImage', data: { dataUrl: reader.result }, success: (data) => {
+                                let textarea = element.parentNode.querySelector('textarea');
+                                textarea.value = textarea.value.slice(0, textarea.selectionStart) + `![](${data.imgUrl})` + textarea.value.slice(textarea.selectionStart);
+                                textarea.focus();
+                                let evt = new Event('change');
+                                textarea.dispatchEvent(evt);
+                                let eventHandlerKey = Object.keys(textarea).find((item) => item.includes('_reactEventHandlers'));
+                                let eventHandler = textarea[eventHandlerKey];
+                                eventHandler.onChange(evt);
+                            }
+                        });
                     }
                 });
                 fileSelector.click();
             });
+        });
+    }
+
+    // 修改默认过滤器
+    if (localStorage['explore:setDefaultFilter'] == 'true') {
+        addStyle(`
+            ul[aria-labelledby] li {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+            }
+            ul[aria-labelledby] li > a { padding-right: 0; }
+            ul[aria-labelledby] li > .default {
+                font-size: 0.75rem;
+                padding-right: 1em;
+            }
+            ul[aria-labelledby] li > .default:hover {
+                text-decoration: underline;
+            }
+            ul[aria-labelledby] li > .set-default {
+                font-size: 0.75rem;
+                padding-right: 1em;
+                color: #4c97ff;
+            }
+            ul[aria-labelledby] li > .set-default:hover {
+                cursor: pointer;
+                text-decoration: underline;
+            }
+        `);
+        let defaultFilterSet = {};
+        addFindElement('ul[aria-labelledby]', (element) => {
+            // 默认设置逻辑
+            let setValues = '';
+            element.querySelectorAll('li > a').forEach(a => setValues += a.innerText + '|' );
+            let f = { 
+                type: Blockey.Utils.getContext().targetType,
+                filter: setValues };
+            let defaultFilter = {};
+            try {
+                defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
+            } catch (e) { }
+            if (defaultFilter[`${f.type}:${f.filter}`] && !defaultFilterSet[`${f.type}:${f.filter}`]) {
+                let defaultValue = defaultFilter[`${f.type}:${f.filter}`];
+                element.querySelectorAll('li').forEach((li) => {
+                    if (li.innerText == defaultValue) {
+                        li.querySelector('a').click();
+                        defaultFilterSet[`${f.type}:${f.filter}`] = true;
+                    }
+                });
+            }
+            // 设置默认过滤器按键
+            element.querySelectorAll('li').forEach((li) => {
+                let f = { type: Blockey.Utils.getContext().targetType, filter: setValues, value: li.innerText };
+                console.log(f);
+                let defaultFilter = {};
+                try {
+                    defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
+                } catch (e) { }
+                if (defaultFilter[`${f.type}:${f.filter}`] == f.value) li.insertAdjacentHTML('beforeend', `<span class="default">默认</span>`);
+                else li.insertAdjacentHTML('beforeend', `<span class="set-default">设为默认</span>`);
+                window.addEventListener('update-default', () => {
+                    defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
+                    if (defaultFilter[`${f.type}:${f.filter}`] == f.value) {
+                        li.querySelector('.default, .set-default').className = 'default';
+                        li.querySelector('.default').innerText = '默认';
+                    } else {
+                        li.querySelector('.default, .set-default').className = 'set-default';
+                        li.querySelector('.set-default').innerText = '设为默认';
+                    }
+                });
+                li.querySelector('.set-default, .default')?.addEventListener('click', (evt) => {
+                    evt.stopPropagation();
+                    defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
+                    if (defaultFilter[`${f.type}:${f.filter}`] == f.value) delete defaultFilter[`${f.type}:${f.filter}`];
+                    else {
+                        defaultFilter[`${f.type}:${f.filter}`] = f.value;
+                    }
+                    localStorage['explore:defaultFilter'] = JSON.stringify(defaultFilter);
+                    window.dispatchEvent(new CustomEvent('update-default'));
+                });
+            })
         });
     }
     // Your code here...
