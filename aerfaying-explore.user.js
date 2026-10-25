@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Aerfaying Explore - 阿儿法营/稽木世界社区优化插件
 // @namespace    waterblock79.github.io
-// @version      1.22.0
+// @version      1.22.1
 // @description  提供优化、补丁及小功能提升社区内的探索效率和用户体验
 // @author       waterblock79
 // @match        http://gitblock.cn/*
@@ -39,7 +39,7 @@
             alert('似乎无法在您的浏览器上运行此脚本。')
         }
     }
-    const version = '1.22.0';
+    const version = '1.22.1';
 
     const DEFAULT_MAIN_COLOR = '#4c97ff',
         DEFAULT_SECOND_COLOR = '#82d900';
@@ -335,10 +335,9 @@
                 clearInterval(interval);
             }
         });
-        Blockey.Utils.confirm(`欢迎使用 Aerfaying-Explore`, `
-            <b>嗨${Blockey.Utils.getLoggedInUser() ? `，${Blockey.Utils.getLoggedInUser().username}` : ''}！欢迎使用 Aerfaying-Explore 插件！</b><br/>
-            - 当您看到这条消息时说明您已经成功地安装了这个插件，希望这个插件能有效地提升您的社区探索体验！<br/>
-            - 大部分拓展功能默认是关闭的，您可以在 <a onclick="$('#nav-explore-setting')[0].click()">插件设置</a> 中选择启用或关闭插件功能。<br/>
+        Blockey.Utils.confirm('', `
+            <img width="70%" style="margin: -0.5em 15% 1em 15%" src="https://asset.gitblock.cn/Media?name=A275AF3BB412D7EF0492F4BC80DB4363.svg" />
+            <b>嗨${Blockey.Utils.getLoggedInUser() ? `，${Blockey.Utils.getLoggedInUser().username}` : ''}！欢迎使用 Aerfaying-Explore 插件！</b>大部分拓展功能默认是关闭的，您可以在 <a onclick="$('#nav-explore-setting')[0].click()">插件设置</a> 中选择启用或关闭插件功能。<br/>
         `);
     }
 
@@ -2681,24 +2680,29 @@
                 justify-content: space-between;
             }
             ul[aria-labelledby] li > a { padding-right: 0; }
-            ul[aria-labelledby] li > .default {
-                font-size: 0.75rem;
-                padding-right: 1em;
-            }
-            ul[aria-labelledby] li > .default:hover {
-                text-decoration: underline;
-            }
             ul[aria-labelledby] li > .set-default {
                 font-size: 0.75rem;
                 padding-right: 1em;
-                color: #4c97ff;
+                color: #99999988;
             }
             ul[aria-labelledby] li > .set-default:hover {
                 cursor: pointer;
-                text-decoration: underline;
+                color: #4c97ff88;
+            }
+            ul[aria-labelledby] li > .set-default.active {
+                color: #4c97ff;
             }
         `);
         let defaultFilterSet = {};
+        // 切换页面（含浏览器返回键）后重新应用默认过滤器；
+        // 仅在路径变化时清空标记，避免同页的筛选 / 排序变化导致重复应用、覆盖用户手动选择
+        let lastPathname = location.pathname;
+        addHrefChangeEvent(() => {
+            if (location.pathname != lastPathname) {
+                lastPathname = location.pathname;
+                defaultFilterSet = {};
+            }
+        });
         addFindElement('ul[aria-labelledby]', (element) => {
             // 默认设置逻辑
             let setValues = '';
@@ -2727,19 +2731,14 @@
                 try {
                     defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
                 } catch (e) { }
-                if (defaultFilter[`${f.type}:${f.filter}`] == f.value) li.insertAdjacentHTML('beforeend', `<span class="default">默认</span>`);
-                else li.insertAdjacentHTML('beforeend', `<span class="set-default">设为默认</span>`);
+                if (defaultFilter[`${f.type}:${f.filter}`] == f.value) li.insertAdjacentHTML('beforeend', `<span class="set-default glyphicon glyphicon-pushpin active"></span>`);
+                else li.insertAdjacentHTML('beforeend', `<span class="set-default glyphicon glyphicon-pushpin"></span>`);
                 window.addEventListener('update-default', () => {
                     defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
-                    if (defaultFilter[`${f.type}:${f.filter}`] == f.value) {
-                        li.querySelector('.default, .set-default').className = 'default';
-                        li.querySelector('.default').innerText = '默认';
-                    } else {
-                        li.querySelector('.default, .set-default').className = 'set-default';
-                        li.querySelector('.set-default').innerText = '设为默认';
-                    }
+                    if (defaultFilter[`${f.type}:${f.filter}`] == f.value) li.querySelector('.set-default').classList.add('active');
+                    else li.querySelector('.set-default').classList.remove('active');
                 });
-                li.querySelector('.set-default, .default')?.addEventListener('click', (evt) => {
+                li.querySelector('.set-default')?.addEventListener('click', (evt) => {
                     evt.stopPropagation();
                     defaultFilter = JSON.parse(localStorage['explore:defaultFilter'] || '{}');
                     if (defaultFilter[`${f.type}:${f.filter}`] == f.value) delete defaultFilter[`${f.type}:${f.filter}`];
